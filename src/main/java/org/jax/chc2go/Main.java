@@ -20,24 +20,11 @@ public class Main {
     public static void main(String [] args) {
         Main main = new Main();
 
-        JCommander jc = JCommander.newBuilder()
+        JCommander.newBuilder()
                 .addObject(main)
-                .build();
-        jc.setProgramName("java -jar CHC2GO.jar");
-        try {
-            jc.parse(args);
-        } catch (ParameterException e) {
-            System.err.println("[ERROR] "+e.getMessage());
-            jc.usage();
-            System.exit(1);
-        }
-
-        if ( main.usageHelpRequested) {
-            jc.usage();
-            System.exit(1);
-        }
-        String pp = (String)jc.getCommands().get("chcInteractionPath").getParsedCommand();
-        System.out.printf(pp);
+                .build().
+                parse(args);
+        
         Main mn = new Main();
 
     }
