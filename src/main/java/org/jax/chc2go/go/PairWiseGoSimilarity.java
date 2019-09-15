@@ -13,38 +13,36 @@ import org.monarchinitiative.phenol.analysis.*;
 import org.monarchinitiative.phenol.ontology.data.TermId;
 import org.monarchinitiative.phenol.ontology.data.TermIds;
 import org.monarchinitiative.phenol.ontology.similarity.PairwiseResnikSimilarity;
-import org.monarchinitiative.phenol.ontology.similarity.ResnikSimilarity;
-import sun.util.resources.cldr.zh.CalendarData_zh_Hans_HK;
 
 import java.io.File;
 import java.util.*;
 
+/**
+ * Class to calculate the pairwise similarity of genes/proteins according to the Gene Ontology terms that annotate them.
+ */
 public class PairWiseGoSimilarity {
-
+    /** Each entry corresponds to a Capture Hi C interaction. */
     private final List<ChcInteraction> chcInteractionList;
 
     private Ontology geneOntology;
-
+    /** Use by the GO framework to store annotations. */
     private AssociationContainer associationContainer;
-
-    private ResnikSimilarity resnikSimilarity;
-
+    /** Pairwise similarity of GO terms. */
     private PairwiseResnikSimilarity pairwiseSimilarity;
-
+    /** Key. TermId of a Gene Ontology term. Value: The information content (IC) of the term. */
     private Map<TermId, Double> icMap;
-
+    /** Key -- symbol of a gene; Value: Corresponding Uniprot TermId. */
     private Map<String,TermId> geneSymbol2TermId;
-
     private static final String NOT_INITIALIZED = "n/a";
     /** count how many times we use the memo (for debug) */
     private int saved_lookup = 0;
-
+    /** Key: Gene Ontology TermId. Value: Collection of genes/proteins that the GO term annotates. */
     private Map<TermId, Collection<TermId>> geneIdToTermIds;
+    /** Key -- TermId of a human gene/protein. Value: Collection of Gene Ontology terms that annotate the gene. */
     private Map<TermId, Collection<TermId>> termIdToGeneIds;
     /** Stores GO similarities for pairs of TermIds to avoid double calculations */
     private Map<TermIdPair,Double> memoizedSimilarities;
 
-    private int numThreads = 2;
 
 
     public PairWiseGoSimilarity(List<ChcInteraction> interactions, String goObo, String goGaf) {
@@ -97,6 +95,7 @@ public class PairWiseGoSimilarity {
         Map<ChcInteraction.InteractionType,List<Double>> meansUnder250k = new HashMap<>();
         Map<ChcInteraction.InteractionType,List<Double>> meansUnder500k = new HashMap<>();
         Map<ChcInteraction.InteractionType,List<Double>> meansUnder1m = new HashMap<>();
+        Map<ChcInteraction.InteractionType,List<Double>> meansOver1m = new HashMap<>();
         for (ChcInteraction chci :  chcInteractionList) {
             ChcInteraction.InteractionType itype = chci.getItype();
             means.putIfAbsent(itype,new ArrayList<>());
@@ -107,17 +106,20 @@ public class PairWiseGoSimilarity {
                 meansUnder100k.putIfAbsent(itype,new ArrayList<>());
                 meansUnder100k.get(itype).add(sim);
             }
-            if (dist < 250_000) {
+            else if (dist < 250_000) {
                 meansUnder250k.putIfAbsent(itype,new ArrayList<>());
                 meansUnder250k.get(itype).add(sim);
             }
-            if (dist < 500_000) {
+            else if (dist < 500_000) {
                 meansUnder500k.putIfAbsent(itype,new ArrayList<>());
                 meansUnder500k.get(itype).add(sim);
             }
-            if (dist < 1_000_000) {
+            else if (dist < 1_000_000) {
                 meansUnder1m.putIfAbsent(itype,new ArrayList<>());
                 meansUnder1m.get(itype).add(sim);
+            } else {
+                meansOver1m.putIfAbsent(itype, new ArrayList<>());
+                meansOver1m.get(itype).add(sim);
             }
 
         }
@@ -170,38 +172,58 @@ public class PairWiseGoSimilarity {
             double mean = average.isPresent() ? average.getAsDouble() : 0;
             System.out.println(it + " mean similarity (<1m)=" + mean);
         }
+        System.out.println();
+        for (ChcInteraction.InteractionType it : meansOver1m.keySet()) {
+            List<Double> simvals = meansOver1m.get(it);
+            OptionalDouble average = simvals
+                    .stream()
+                    .mapToDouble(a -> a)
+                    .average();
+            double mean = average.isPresent() ? average.getAsDouble() : 0;
+            System.out.println(it + " mean similarity (>1m)=" + mean);
+        }
     }
 
+    /**
+     * Calculate medians according to distance and dump to shell
+     */
     private void compareMedians() {
-        //
         Map<ChcInteraction.InteractionType,List<Double>> medians = new HashMap<>();
         Map<ChcInteraction.InteractionType,List<Double>> mediansUnder100k = new HashMap<>();
         Map<ChcInteraction.InteractionType,List<Double>> mediansUnder250k = new HashMap<>();
         Map<ChcInteraction.InteractionType,List<Double>> mediansUnder500k = new HashMap<>();
         Map<ChcInteraction.InteractionType,List<Double>> mediansUnder1m = new HashMap<>();
+        Map<ChcInteraction.InteractionType,List<Double>> mediansOver1m = new HashMap<>();
+        int count_of_zero_similarity_interactions = 0;
         for (ChcInteraction chci :  chcInteractionList) {
             ChcInteraction.InteractionType itype = chci.getItype();
             medians.putIfAbsent(itype,new ArrayList<>());
             double sim = chci.getSimilarity();
+            if (sim == 0.0) {
+                count_of_zero_similarity_interactions++;
+            }
             int dist = chci.getDistance();
             medians.get(itype).add(sim);
             if (dist < 100_000) {
                 mediansUnder100k.putIfAbsent(itype,new ArrayList<>());
                 mediansUnder100k.get(itype).add(sim);
             }
-            if (dist < 250_000) {
+            else if (dist < 250_000) {
                 mediansUnder250k.putIfAbsent(itype,new ArrayList<>());
                 mediansUnder250k.get(itype).add(sim);
             }
-            if (dist < 500_000) {
+            else if (dist < 500_000) {
                 mediansUnder500k.putIfAbsent(itype,new ArrayList<>());
                 mediansUnder500k.get(itype).add(sim);
             }
-            if (dist < 1_000_000) {
+            else if (dist < 1_000_000) {
                 mediansUnder1m.putIfAbsent(itype,new ArrayList<>());
                 mediansUnder1m.get(itype).add(sim);
+            } else {
+                mediansOver1m.putIfAbsent(itype,new ArrayList<>());
+                mediansOver1m.get(itype).add(sim);
             }
-
+            System.out.println("[INFO] count_of_zero_similarity_interactions = " + count_of_zero_similarity_interactions);
         }
 
         for (ChcInteraction.InteractionType it : medians.keySet()) {
@@ -249,6 +271,16 @@ public class PairWiseGoSimilarity {
                     .average();
             double mean = average.isPresent() ? average.getAsDouble() : 0;
             System.out.println(it + " median similarity (<1m)=" + mean);
+        }
+        System.out.println();
+        for (ChcInteraction.InteractionType it : mediansOver1m.keySet()) {
+            List<Double> simvals = mediansOver1m.get(it);
+            OptionalDouble average = simvals
+                    .stream()
+                    .mapToDouble(a -> a)
+                    .average();
+            double mean = average.isPresent() ? average.getAsDouble() : 0;
+            System.out.println(it + " median similarity (>1m)=" + mean);
         }
     }
 
@@ -323,9 +355,10 @@ public class PairWiseGoSimilarity {
         Collection<TermId> goTidA = this.geneIdToTermIds.get(tidA);
         Collection<TermId> goTidB = this.geneIdToTermIds.get(tidB);
         if (goTidA==null || goTidB==null) return 0.0;
-        double sum = 0.0;
+        double sumAtoB = 0.0;
         int c = 0;
         for (TermId a : goTidA) {
+            double max_a_to_b = 0.0;
             for (TermId b : goTidB) {
                 double sim;
                 TermIdPair tip = new TermIdPair(a,b);
@@ -336,12 +369,34 @@ public class PairWiseGoSimilarity {
                     sim = this.pairwiseSimilarity.computeScore(a, b);
                     this.memoizedSimilarities.put(tip,sim);
                 }
-                sum += sim;
-                c++;
+                if (sim > max_a_to_b) max_a_to_b = sim;
             }
+            c++;
+            sumAtoB += max_a_to_b;
         }
-        if (c==0) return 0.0;
-        return sum/(double)c;
+        double similarityAtoB = c==0 ? 0.0 : sumAtoB/(double)c;
+        // symmetrical -- this looks in the other direction
+        c = 0;
+        double sumBtoA = 0.0;
+        for (TermId b : goTidB) {
+            double max_b_to_a = 0.0;
+            for (TermId a : goTidA) {
+                double sim;
+                TermIdPair tip = new TermIdPair(a,b);
+                if (this.memoizedSimilarities.containsKey(tip)) {
+                    sim = this.memoizedSimilarities.get(tip);
+                    saved_lookup++;
+                } else {
+                    sim = this.pairwiseSimilarity.computeScore(a, b);
+                    this.memoizedSimilarities.put(tip,sim);
+                }
+                if (sim > max_b_to_a) max_b_to_a = sim;
+            }
+            c++;
+            sumBtoA += max_b_to_a;
+        }
+        double similarityBtoA = c==0 ? 0.0 : sumBtoA/(double)c;
+        return 0.5 * (similarityAtoB + similarityBtoA);
     }
 
 

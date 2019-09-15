@@ -12,7 +12,7 @@ import java.util.Objects;
  * Note that we will always sort the ids so that the order of the arguments in the constructor
  * should not matter
  */
-public class TermIdPair {
+class TermIdPair {
 
     private final String  a;
     private final String  b;
