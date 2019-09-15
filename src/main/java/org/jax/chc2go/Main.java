@@ -2,7 +2,6 @@ package org.jax.chc2go;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
-import com.beust.jcommander.ParameterException;
 import org.jax.chc2go.chc.ChcInteraction;
 import org.jax.chc2go.chc.ChcInteractionParser;
 import org.jax.chc2go.go.PairWiseGoSimilarity;

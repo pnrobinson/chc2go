@@ -21,10 +21,6 @@ import java.util.*;
 public class PairWiseGoSimilarity {
 
     private final List<ChcInteraction> chcInteractionList;
-    /**  go.obo file */
-    private final File goOboFile;
-    /** GoGaf file. */
-    private final File goGafFile;
 
     private Ontology geneOntology;
 
@@ -32,11 +28,13 @@ public class PairWiseGoSimilarity {
 
     private ResnikSimilarity resnikSimilarity;
 
-    PairwiseResnikSimilarity pairwiseSimilarity;
+    private PairwiseResnikSimilarity pairwiseSimilarity;
 
     private Map<TermId, Double> icMap;
 
     private Map<String,TermId> geneSymbol2TermId;
+
+    private static final String NOT_INITIALIZED = "n/a";
 
     private Map<TermId, Collection<TermId>> geneIdToTermIds;
     private Map<TermId, Collection<TermId>> termIdToGeneIds;
@@ -46,8 +44,10 @@ public class PairWiseGoSimilarity {
 
     public PairWiseGoSimilarity(List<ChcInteraction> interactions, String goObo, String goGaf) {
         chcInteractionList = interactions;
-        goOboFile = new File(goObo);
-        goGafFile = new File(goGaf);
+        /**  go.obo file */
+        File goOboFile = new File(goObo);
+        /** GoGaf file. */
+        File goGafFile = new File(goGaf);
         if (! goOboFile.exists()) {
             throw new RuntimeException("Could not find go.obo file");
         }
@@ -78,7 +78,50 @@ public class PairWiseGoSimilarity {
         }
         prepareGeneSymbolMapping();
         testAllInteractions();
+        compareMeans();
+        compareMedians();
     }
+
+    /**
+     * Compare mean similarity for the different interaction classes.
+     */
+    private void compareMeans() {
+        Map<ChcInteraction.InteractionType,List<Double>> means = new HashMap<>();
+        for (ChcInteraction chci :  chcInteractionList) {
+            ChcInteraction.InteractionType itype = chci.getItype();
+            means.putIfAbsent(itype,new ArrayList<>());
+            double sim = chci.getSimilarity();
+            means.get(itype).add(sim);
+        }
+        for (ChcInteraction.InteractionType it : means.keySet()) {
+            List<Double> simvals = means.get(it);
+            OptionalDouble average = simvals
+                    .stream()
+                    .mapToDouble(a -> a)
+                    .average();
+            double mean = average.isPresent() ? average.getAsDouble() : 0;
+            System.out.println(it + " mean similarity=" + mean);
+        }
+    }
+
+    private void compareMedians() {
+        //
+        Map<ChcInteraction.InteractionType,List<Double>> medians = new HashMap<>();
+        for (ChcInteraction chci :  chcInteractionList) {
+            ChcInteraction.InteractionType itype = chci.getItype();
+            medians.putIfAbsent(itype,new ArrayList<>());
+            double sim = chci.getSimilarity();
+            medians.get(itype).add(sim);
+        }
+        for (ChcInteraction.InteractionType it : medians.keySet()) {
+            List<Double> simvals = medians.get(it);
+            Collections.sort(simvals);
+            double middle = (simvals.get(simvals.size() / 2) + simvals.get(simvals.size() / 2 - 1)) / 2;
+            System.out.println(it + " median similarity=" + middle);
+        }
+    }
+
+
 
     /**
      * e.g., map KMT2B to UniProtKB:Q9BV73
@@ -101,6 +144,7 @@ public class PairWiseGoSimilarity {
                 e.printStackTrace();
             }
         }
+        System.out.printf("[INFO] We parsed %d gene symbol to TermId mappings", geneIdToTermIds.size());
     }
 
 
@@ -143,8 +187,8 @@ public class PairWiseGoSimilarity {
         if (tidA == null || tidB == null) {
             return 0.0;
         }
-        Collection<TermId> goTidA = this.geneIdToTermIds.get(geneA);
-        Collection<TermId> goTidB = this.geneIdToTermIds.get(geneB);
+        Collection<TermId> goTidA = this.geneIdToTermIds.get(tidA);
+        Collection<TermId> goTidB = this.geneIdToTermIds.get(tidB);
         if (goTidA==null || goTidB==null) return 0.0;
         double sum = 0.0;
         int c = 0;
@@ -163,20 +207,34 @@ public class PairWiseGoSimilarity {
     private void testInteraction(ChcInteraction chci) {
         List<String> genelistA = chci.getGenelistA();
         List<String> genelistB = chci.getGenelistB();
-        String maxGeneA = null;
-        String maxGeneB = null;
+        String maxGeneA = NOT_INITIALIZED;
+        String maxGeneB = NOT_INITIALIZED;
         double maxSim = -1.0;
         for (String a : genelistA) {
             for (String b : genelistB) {
                 double d = getSimilarity(a,b);
-                System.out.printf("%s <-> %s: %.2f\n",a,b,d);
+               // System.out.printf("%s <-> %s: %.2f\n",a,b,d);
+                if (d>maxSim) {
+                    maxSim = d;
+                    maxGeneA = a;
+                    maxGeneB = b;
+                }
             }
         }
+        chci.setSimilarity(maxSim,maxGeneA,maxGeneB);
     }
 
     private void testAllInteractions() {
+        int total = this.chcInteractionList.size();
+        int c = 0;
+        System.out.println();
         for (ChcInteraction chci : this.chcInteractionList) {
             testInteraction(chci);
+            c++;
+            if (c%100==0) {
+                System.out.printf("[INFO] Processed %d/%d interactions (%.1f%%).\r", c, total, 100.0* (double)c/total);
+            }
+           // if (c>2000) break; uncomment for testing
         }
     }
 

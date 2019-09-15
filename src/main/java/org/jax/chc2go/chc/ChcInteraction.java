@@ -1,9 +1,5 @@
 package org.jax.chc2go.chc;
 
-import java.io.BufferedReader;
-import java.io.File;
-import java.io.FileReader;
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.List;
 
@@ -16,7 +12,7 @@ import java.util.List;
  */
 public class ChcInteraction {
 
-    enum InteractionType {
+    public enum InteractionType {
         TWISTED,
         SIMPLE,
         UNDIRECTED,
@@ -30,7 +26,20 @@ public class ChcInteraction {
     private final InteractionType itype;
     private final List<String> genelistA;
     private final List<String> genelistB;
+    private double similarity;
+    private String maxGeneA;
+    private String maxGeneB;
 
+
+    public double getSimilarity() {
+        return similarity;
+    }
+
+    public void setSimilarity(double s, String maxGeneA, String maxGeneB) {
+        this.similarity = s;
+        this.maxGeneA = maxGeneA;
+        this.maxGeneB = maxGeneB;
+    }
 
     public String getPosA() {
         return posA;
