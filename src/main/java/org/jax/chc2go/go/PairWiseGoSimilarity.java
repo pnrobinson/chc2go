@@ -1,6 +1,8 @@
 package org.jax.chc2go.go;
 
 import com.google.common.collect.Sets;
+import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
+import org.apache.commons.math3.stat.inference.TestUtils;
 import org.jax.chc2go.chc.ChcInteraction;
 import org.monarchinitiative.phenol.base.PhenolException;
 import org.monarchinitiative.phenol.formats.go.GoGaf21Annotation;
@@ -16,6 +18,9 @@ import org.monarchinitiative.phenol.ontology.similarity.PairwiseResnikSimilarity
 
 import java.io.File;
 import java.util.*;
+
+import static org.jax.chc2go.chc.ChcInteraction.InteractionType.TWISTED;
+import static org.jax.chc2go.chc.ChcInteraction.InteractionType.UNDIRECTED;
 
 /**
  * Class to calculate the pairwise similarity of genes/proteins according to the Gene Ontology terms that annotate them.
@@ -44,7 +49,12 @@ public class PairWiseGoSimilarity {
     private Map<TermIdPair,Double> memoizedSimilarities;
 
 
-
+    /**
+     *
+     * @param interactions List of Capture Hi-C interaction objects
+     * @param goObo path to the go.obo file
+     * @param goGaf path to human_goa.gaf file
+     */
     public PairWiseGoSimilarity(List<ChcInteraction> interactions, String goObo, String goGaf) {
         chcInteractionList = interactions;
         //  go.obo file
@@ -79,12 +89,62 @@ public class PairWiseGoSimilarity {
         } catch (PhenolException e) {
             e.printStackTrace();
         }
+
+    }
+
+    public void analyzePairwiseSimilarities() {
         prepareGeneSymbolMapping();
         testAllInteractions();
         compareMeans();
-        compareMedians();
         System.out.println("saved="+  saved_lookup );
     }
+
+
+    /**
+     *
+     * @param means One of the hash maps shown in {@link #compareMeans{}
+     * @param title The type of test (e.g., 100k-250k)
+     */
+    private void performTTest( Map<ChcInteraction.InteractionType,List<Double>> means, String title) {
+       System.out.println("\n\n######################" + title + "######################\n\n");
+       if (! means.containsKey(UNDIRECTED)) {
+           System.err.println("[ERROR] Could not find UNDIRECTED data for " + title);
+           return; // should never happen if the input file is valid, but check nonetheless!
+       }
+       DescriptiveStatistics undirectedDS = new DescriptiveStatistics();
+       List<Double> undirected = means.get(UNDIRECTED);
+       undirected.forEach(d -> undirectedDS.addValue(d));
+       double undirectedMean = undirectedDS.getMean();
+       double undirectedMedian = undirectedDS.getPercentile(50.0);
+
+       for (ChcInteraction.InteractionType itype : means.keySet()) {
+           if (itype == UNDIRECTED) {
+               // this is the baseline, just skip it -- we compare everything else to UNDIRECTED
+               continue;
+           }
+           List<Double> range = means.get(itype); // sublist of similarity values that
+           // correspond to itype for a given range, e.g., <100k
+           DescriptiveStatistics rangeDS = new DescriptiveStatistics();
+           range.forEach(d -> rangeDS.addValue(d));
+           double rangeMean = rangeDS.getMean();
+           double rangeMedian = rangeDS.getPercentile(50.0);
+           double pVal = -1.0;
+           System.out.printf("Number of observations: undirected: %d %s: %d\n", undirectedDS.getN(), itype, rangeDS.getN());
+           if (undirectedDS.getN()>1 && rangeDS.getN() > 1) {
+               // need at least two values to do a t-test
+               pVal = TestUtils.tTest(undirectedDS, rangeDS);
+               System.out.printf("Undirected mean: %.2f, median %.2f, %s mean: %.2f, %s median: %.2f, T-test p-value %e\n",
+                       undirectedMean,undirectedMedian,itype,rangeMean,itype,rangeMedian,pVal);
+           } else {
+               System.out.printf("Undirected mean: %.2f, median %.2f, %s mean: %.2f, %s median: %.2f\n",
+                       undirectedMean,undirectedMedian,itype,rangeMean,itype,rangeMedian);
+           }
+           System.out.println();
+
+
+       }
+    }
+
 
     /**
      * Compare mean similarity for the different interaction classes.
@@ -123,166 +183,16 @@ public class PairWiseGoSimilarity {
             }
 
         }
-        for (ChcInteraction.InteractionType it : means.keySet()) {
-            List<Double> simvals = means.get(it);
-            OptionalDouble average = simvals
-                    .stream()
-                    .mapToDouble(a -> a)
-                    .average();
-            double mean = average.isPresent() ? average.getAsDouble() : 0;
-            System.out.println(it + " mean similarity (overall)=" + mean);
-        }
-        System.out.println();
-        for (ChcInteraction.InteractionType it : meansUnder100k.keySet()) {
-            List<Double> simvals = meansUnder100k.get(it);
-            OptionalDouble average = simvals
-                    .stream()
-                    .mapToDouble(a -> a)
-                    .average();
-            double mean = average.isPresent() ? average.getAsDouble() : 0;
-            System.out.println(it + " mean similarity (<100k)=" + mean);
-        }
-        System.out.println();
-        for (ChcInteraction.InteractionType it : meansUnder250k.keySet()) {
-            List<Double> simvals = meansUnder250k.get(it);
-            OptionalDouble average = simvals
-                    .stream()
-                    .mapToDouble(a -> a)
-                    .average();
-            double mean = average.isPresent() ? average.getAsDouble() : 0;
-            System.out.println(it + " mean similarity (<250k)=" + mean);
-        }
-        System.out.println();
-        for (ChcInteraction.InteractionType it : meansUnder500k.keySet()) {
-            List<Double> simvals = meansUnder500k.get(it);
-            OptionalDouble average = simvals
-                    .stream()
-                    .mapToDouble(a -> a)
-                    .average();
-            double mean = average.isPresent() ? average.getAsDouble() : 0;
-            System.out.println(it + " mean similarity (<500k)=" + mean);
-        }
-        System.out.println();
-        for (ChcInteraction.InteractionType it : meansUnder1m.keySet()) {
-            List<Double> simvals = meansUnder1m.get(it);
-            OptionalDouble average = simvals
-                    .stream()
-                    .mapToDouble(a -> a)
-                    .average();
-            double mean = average.isPresent() ? average.getAsDouble() : 0;
-            System.out.println(it + " mean similarity (<1m)=" + mean);
-        }
-        System.out.println();
-        for (ChcInteraction.InteractionType it : meansOver1m.keySet()) {
-            List<Double> simvals = meansOver1m.get(it);
-            OptionalDouble average = simvals
-                    .stream()
-                    .mapToDouble(a -> a)
-                    .average();
-            double mean = average.isPresent() ? average.getAsDouble() : 0;
-            System.out.println(it + " mean similarity (>1m)=" + mean);
-        }
+
+        performTTest(means, "overall");
+        performTTest(meansUnder100k, "under 100k");
+        performTTest(meansUnder250k, "over 100k and under 250k");
+        performTTest(meansUnder500k, "over 250k and under 500k");
+        performTTest(meansUnder1m, "over 500k and under 1m");
+        performTTest(meansOver1m, "over 1m");
+
     }
 
-    /**
-     * Calculate medians according to distance and dump to shell
-     */
-    private void compareMedians() {
-        Map<ChcInteraction.InteractionType,List<Double>> medians = new HashMap<>();
-        Map<ChcInteraction.InteractionType,List<Double>> mediansUnder100k = new HashMap<>();
-        Map<ChcInteraction.InteractionType,List<Double>> mediansUnder250k = new HashMap<>();
-        Map<ChcInteraction.InteractionType,List<Double>> mediansUnder500k = new HashMap<>();
-        Map<ChcInteraction.InteractionType,List<Double>> mediansUnder1m = new HashMap<>();
-        Map<ChcInteraction.InteractionType,List<Double>> mediansOver1m = new HashMap<>();
-        int count_of_zero_similarity_interactions = 0;
-        for (ChcInteraction chci :  chcInteractionList) {
-            ChcInteraction.InteractionType itype = chci.getItype();
-            medians.putIfAbsent(itype,new ArrayList<>());
-            double sim = chci.getSimilarity();
-            if (sim == 0.0) {
-                count_of_zero_similarity_interactions++;
-            }
-            int dist = chci.getDistance();
-            medians.get(itype).add(sim);
-            if (dist < 100_000) {
-                mediansUnder100k.putIfAbsent(itype,new ArrayList<>());
-                mediansUnder100k.get(itype).add(sim);
-            }
-            else if (dist < 250_000) {
-                mediansUnder250k.putIfAbsent(itype,new ArrayList<>());
-                mediansUnder250k.get(itype).add(sim);
-            }
-            else if (dist < 500_000) {
-                mediansUnder500k.putIfAbsent(itype,new ArrayList<>());
-                mediansUnder500k.get(itype).add(sim);
-            }
-            else if (dist < 1_000_000) {
-                mediansUnder1m.putIfAbsent(itype,new ArrayList<>());
-                mediansUnder1m.get(itype).add(sim);
-            } else {
-                mediansOver1m.putIfAbsent(itype,new ArrayList<>());
-                mediansOver1m.get(itype).add(sim);
-            }
-            System.out.println("[INFO] count_of_zero_similarity_interactions = " + count_of_zero_similarity_interactions);
-        }
-
-        for (ChcInteraction.InteractionType it : medians.keySet()) {
-            List<Double> simvals = medians.get(it);
-            Collections.sort(simvals);
-            double middle = (simvals.get(simvals.size() / 2) + simvals.get(simvals.size() / 2 - 1)) / 2;
-            System.out.println(it + " median similarity=" + middle);
-        }
-        System.out.println();
-        for (ChcInteraction.InteractionType it : mediansUnder100k.keySet()) {
-            List<Double> simvals = mediansUnder100k.get(it);
-            OptionalDouble average = simvals
-                    .stream()
-                    .mapToDouble(a -> a)
-                    .average();
-            double mean = average.isPresent() ? average.getAsDouble() : 0;
-            System.out.println(it + " median similarity (<100k)=" + mean);
-        }
-        System.out.println();
-        for (ChcInteraction.InteractionType it : mediansUnder250k.keySet()) {
-            List<Double> simvals = mediansUnder250k.get(it);
-            OptionalDouble average = simvals
-                    .stream()
-                    .mapToDouble(a -> a)
-                    .average();
-            double mean = average.isPresent() ? average.getAsDouble() : 0;
-            System.out.println(it + " median similarity (<250k)=" + mean);
-        }
-        System.out.println();
-        for (ChcInteraction.InteractionType it : mediansUnder500k.keySet()) {
-            List<Double> simvals = mediansUnder500k.get(it);
-            OptionalDouble average = simvals
-                    .stream()
-                    .mapToDouble(a -> a)
-                    .average();
-            double mean = average.isPresent() ? average.getAsDouble() : 0;
-            System.out.println(it + " median similarity (<500k)=" + mean);
-        }
-        System.out.println();
-        for (ChcInteraction.InteractionType it : mediansUnder1m.keySet()) {
-            List<Double> simvals = mediansUnder1m.get(it);
-            OptionalDouble average = simvals
-                    .stream()
-                    .mapToDouble(a -> a)
-                    .average();
-            double mean = average.isPresent() ? average.getAsDouble() : 0;
-            System.out.println(it + " median similarity (<1m)=" + mean);
-        }
-        System.out.println();
-        for (ChcInteraction.InteractionType it : mediansOver1m.keySet()) {
-            List<Double> simvals = mediansOver1m.get(it);
-            OptionalDouble average = simvals
-                    .stream()
-                    .mapToDouble(a -> a)
-                    .average();
-            double mean = average.isPresent() ? average.getAsDouble() : 0;
-            System.out.println(it + " median similarity (>1m)=" + mean);
-        }
-    }
 
 
 
@@ -430,7 +340,7 @@ public class PairWiseGoSimilarity {
             if (c%100==0) {
                 System.out.printf("[INFO] Processed %d/%d interactions (%.1f%%).\r", c, total, 100.0* (double)c/total);
             }
-           // if (c>2000) break; uncomment for testing
+            //if (c>5000) break; //uncomment for testing
         }
     }
 

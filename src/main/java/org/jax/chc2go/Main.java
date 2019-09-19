@@ -39,10 +39,14 @@ public class Main {
     public Main() {
     }
 
-    public void run() {
+    /**
+     * Parse the interaction file, the two Gene Ontology files, and analyze the data.
+     */
+    private void run() {
         ChcInteractionParser parser = new ChcInteractionParser(this.chcInteractionPath);
         List<ChcInteraction> chcInteractionList = parser.getInteractions();
         PairWiseGoSimilarity psim = new PairWiseGoSimilarity(chcInteractionList,goOboPath,goGafPath);
+        psim.analyzePairwiseSimilarities();
     }
 
 
