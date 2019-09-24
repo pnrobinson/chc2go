@@ -29,7 +29,7 @@ public class ChcInteractionParser {
         String line;
         while ((line=br.readLine()) != null) {
             String[] fields = line.split("\t");
-            if (fields.length != 4) {
+            if (fields.length < 4) {
                 System.err.printf("[ERROR] Malformed line with %d fields (expected 4)", fields.length);
             }
             String[] pos = fields[0].split(";");

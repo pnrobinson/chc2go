@@ -20,7 +20,7 @@ import java.io.File;
 import java.util.*;
 
 import static org.jax.chc2go.chc.ChcInteraction.InteractionType.TWISTED;
-import static org.jax.chc2go.chc.ChcInteraction.InteractionType.UNDIRECTED;
+import static org.jax.chc2go.chc.ChcInteraction.InteractionType.UNDIRECTED_REF;
 
 /**
  * Class to calculate the pairwise similarity of genes/proteins according to the Gene Ontology terms that annotate them.
@@ -107,19 +107,19 @@ public class PairWiseGoSimilarity {
      */
     private void performTTest( Map<ChcInteraction.InteractionType,List<Double>> means, String title) {
        System.out.println("\n\n######################" + title + "######################\n\n");
-       if (! means.containsKey(UNDIRECTED)) {
-           System.err.println("[ERROR] Could not find UNDIRECTED data for " + title);
+       if (! means.containsKey(UNDIRECTED_REF)) {
+           System.err.println("[ERROR] Could not find UNDIRECTED_REF data for " + title);
            return; // should never happen if the input file is valid, but check nonetheless!
        }
        DescriptiveStatistics undirectedDS = new DescriptiveStatistics();
-       List<Double> undirected = means.get(UNDIRECTED);
+       List<Double> undirected = means.get(UNDIRECTED_REF);
        undirected.forEach(d -> undirectedDS.addValue(d));
        double undirectedMean = undirectedDS.getMean();
        double undirectedMedian = undirectedDS.getPercentile(50.0);
 
        for (ChcInteraction.InteractionType itype : means.keySet()) {
-           if (itype == UNDIRECTED) {
-               // this is the baseline, just skip it -- we compare everything else to UNDIRECTED
+           if (itype == UNDIRECTED_REF) {
+               // this is the baseline, just skip it -- we compare everything else to UNDIRECTED_REF
                continue;
            }
            List<Double> range = means.get(itype); // sublist of similarity values that
@@ -133,10 +133,10 @@ public class PairWiseGoSimilarity {
            if (undirectedDS.getN()>1 && rangeDS.getN() > 1) {
                // need at least two values to do a t-test
                pVal = TestUtils.tTest(undirectedDS, rangeDS);
-               System.out.printf("Undirected mean: %.2f, median %.2f, %s mean: %.2f, %s median: %.2f, T-test p-value %e\n",
+               System.out.printf("Undirected reference mean: %.2f, median %.2f, %s mean: %.2f, %s median: %.2f, T-test p-value %e\n",
                        undirectedMean,undirectedMedian,itype,rangeMean,itype,rangeMedian,pVal);
            } else {
-               System.out.printf("Undirected mean: %.2f, median %.2f, %s mean: %.2f, %s median: %.2f\n",
+               System.out.printf("Undirected reference mean: %.2f, median %.2f, %s mean: %.2f, %s median: %.2f\n",
                        undirectedMean,undirectedMedian,itype,rangeMean,itype,rangeMedian);
            }
            System.out.println();

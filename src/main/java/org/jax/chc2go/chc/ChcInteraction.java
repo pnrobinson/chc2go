@@ -16,6 +16,7 @@ public class ChcInteraction {
         TWISTED,
         SIMPLE,
         UNDIRECTED,
+        UNDIRECTED_REF,
         UNKNOWN,
         NO_GENE_IN_DIGEST
     }
@@ -78,6 +79,9 @@ public class ChcInteraction {
             switch (cat) {
                 case "U":
                     itype = InteractionType.UNDIRECTED;
+                    break;
+                case "UR":
+                    itype = InteractionType.UNDIRECTED_REF;
                     break;
                 case "T":
                     itype = InteractionType.TWISTED;
