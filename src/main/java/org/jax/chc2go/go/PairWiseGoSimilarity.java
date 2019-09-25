@@ -119,7 +119,7 @@ public class PairWiseGoSimilarity {
 
        for (ChcInteraction.InteractionType itype : means.keySet()) {
            if (itype == UNDIRECTED_REF) {
-               // this is the baseline, just skip it -- we compare everything else to UNDIRECTED_REF
+               // this is the baseline, just skip it -- we compare everything else to UNDIRECTED_REFxxx
                continue;
            }
            List<Double> range = means.get(itype); // sublist of similarity values that
