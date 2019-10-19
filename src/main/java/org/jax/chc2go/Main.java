@@ -2,8 +2,12 @@ package org.jax.chc2go;
 
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
+import com.beust.jcommander.ParameterException;
 import org.jax.chc2go.chc.ChcInteraction;
 import org.jax.chc2go.chc.ChcInteractionParser;
+import org.jax.chc2go.command.Chc2GoCommand;
+import org.jax.chc2go.command.DownloadCommand;
+import org.jax.chc2go.command.StatsCommand;
 import org.jax.chc2go.go.PairWiseGoSimilarity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -15,38 +19,56 @@ public class Main {
     @Parameter(names = {"-h", "--help"}, help = true, description = "display this help message")
     private boolean usageHelpRequested;
 
-    @Parameter(names = {"-c", "--chc"}, required = true, description = "path to CHC interaction file")
-    private String chcInteractionPath;
 
-    @Parameter(names = {"-g", "--go"}, required = true, description = "path to go.obo file")
-    private String goOboPath;
 
-    @Parameter(names = {"-a", "--gaf"}, required = true, description = "path to GAF file")
-    private String goGafPath;
-
-    public static void main(String [] args) {
+    public static void main(String[] args) {
         Main main = new Main();
+        StatsCommand stats = new StatsCommand();
+        DownloadCommand download = new DownloadCommand();
 
-        JCommander.newBuilder()
+        JCommander jc = JCommander.newBuilder()
                 .addObject(main)
-                .build().
-                parse(args);
-        
-      main.run();
+                .addCommand("download", download)
+                .addCommand("stats", stats)
+                .build();
+
+        try {
+            jc.parse(args);
+        } catch (ParameterException pe) {
+            System.err.printf("[ERROR] Could not start chc2go: %s\n", pe.getMessage());
+            System.exit(1);
+        }
+        if (main.usageHelpRequested) {
+            jc.usage();
+            System.exit(0);
+        }
+        String command = jc.getParsedCommand();
+        if (command == null) {
+            System.err.println("[ERROR] no command passed");
+            System.err.println(jc.toString());
+            System.exit(1);
+        }
+        Chc2GoCommand chc2goCommand = null;
+        switch (command) {
+            case "download":
+                chc2goCommand= download;
+                break;
+            case "stats":
+                chc2goCommand = stats;
+                break;
+        }
+        chc2goCommand.run();
 
     }
 
-    public Main() {
+    private Main() {
     }
 
     /**
      * Parse the interaction file, the two Gene Ontology files, and analyze the data.
      */
     private void run() {
-        ChcInteractionParser parser = new ChcInteractionParser(this.chcInteractionPath);
-        List<ChcInteraction> chcInteractionList = parser.getInteractions();
-        PairWiseGoSimilarity psim = new PairWiseGoSimilarity(chcInteractionList,goOboPath,goGafPath);
-        psim.analyzePairwiseSimilarities();
+
     }
 
 
