@@ -24,7 +24,7 @@ public class Downloader {
     /** If true, download new version whether or not the file is already present. */
     private final boolean overwrite;
 
-    private final static String GO_OBO = "hp.obo";
+    private final static String GO_OBO = "go.obo";
     /** URL of the hp.obo file. */
     private final static String GO_OBO_URL ="http://purl.obolibrary.org/obo/go.obo";
     /** URL of the annotation file phenotype.hpoa. */

@@ -51,7 +51,8 @@ We can now run the app as follows.
 The stats mode
 ~~~~~~~~~~~~~~
 
-This mode calculates the statistical significance of higher similarity of pairs of genes in interactions with directed or non-directed orientation.
+This mode calculates the statistical significance of higher similarity of pairs of genes
+in interactions with directed or non-directed orientation.
 
 .. code-block:: java
 

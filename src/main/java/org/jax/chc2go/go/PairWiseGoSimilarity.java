@@ -245,13 +245,13 @@ public class PairWiseGoSimilarity {
             String geneB = interact.getMaxGeneB();
             TermId tidA = this.geneSymbol2TermId.get(geneA);
             if (tidA == null) {
-                System.err.printf("[ERROR] COuld not find termid for %s, skipping.\n",geneA);
+                System.err.printf("[ERROR] Could not find termid for %s, skipping.\n",geneA);
             } else {
                 studyGenes.add(tidA);
             }
             TermId tidB = this.geneSymbol2TermId.get(geneB);
             if (tidB == null) {
-                System.err.printf("[ERROR] COuld not find termid for %s, skipping.\n",geneB);
+                System.err.printf("[ERROR] Could not find termid for %s, skipping.\n",geneB);
             } else {
                 studyGenes.add(tidB);
             }
