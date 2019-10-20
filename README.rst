@@ -20,12 +20,21 @@ github and build it using maven.
     $ mvn package
 
 
-Gene Ontology Files
-~~~~~~~~~~~~~~~~~~~
-Download the Gene Ontology obo file from http://geneontology.org/docs/download-ontology/.
-Download the Gene Ontology human annotation file
-from http://current.geneontology.org/products/pages/downloads.html (download ``goa_human.gag.gz``).
-Unpack the gzip file
+Downloading Files
+~~~~~~~~~~~~~~~~~
+We can use the download mode of chc2go to get the
+`Gene Ontology <http://geneontology.org>`_ files needed for the analysis and unzip them as needed.. 
+  
+
+.. code-block:: java
+
+    $ java -jar CHC2GO.jar -c download
+
+
+
+This will download the files to a subdirectory called ``data``. The other commands expect to find the files in this directory. If another directory is used, then you need to indicate the path to the directory with the ``-d`` flag.
+
+Alternatively, the files can be manually downloaded. We need two files from `Gene Ontology <http://geneontology.org>`_, the ``go.obo`` and ``goa_human.gaf.gz`` (See the Download page). Then, the gzip file needs to be unzipped.
 
 .. code-block:: bash
 
@@ -39,15 +48,17 @@ TODO -- describe how to create the input file mifsud_at_least_two_original_inter
 We can now run the app as follows.
 
 
+The stats mode
+~~~~~~~~~~~~~~
+
+This mode calculates the statistical significance of higher similarity of pairs of genes in interactions with directed or non-directed orientation.
+
 .. code-block:: java
 
-    $ java -jar CHC2GO.jar -c diachromatic/mifsud_at_least_two_original_interactions_with_genesymbols.tsv \
-        -g go.obo -a goa_human.gaf
+    $ java -jar CHC2GO.jar stats -c mifsud_at_least_two_original_interactions_with_genesymbols.tsv \
 
-Note that the paths should be adjusted appropriately.
 
-The app requires roughly **39 minutes** to complete. The implementation of the algorithm is currently
-not as efficient as possible.
+The app requires roughly **39 minutes** to complete. The implementation of the algorithm is currentlynot as efficient as possible.
 
 The output looks like this
 
@@ -65,3 +76,12 @@ Undirected mean: 0.70, median 0.64, UNKNOWN mean: 0.66, UNKNOWN median: 0.62, T-
 
 Number of observations: undirected: 74209 TWISTED: 371
 Undirected mean: 0.70, median 0.64, TWISTED mean: 0.77, TWISTED median: 0.69, T-test p-value 1.242560e-02
+
+The overrep mode
+~~~~~~~~~~~~~~~~
+
+This mode looks for Gene Ontology terms that are overrepresented in the interacting pairs. TODO add various threshold.
+
+. code-block:: java
+
+    $ java -jar CHC2GO.jar overrep -c mifsud_at_least_two_original_interactions_with_genesymbols.tsv 
