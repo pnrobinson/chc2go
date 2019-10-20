@@ -1,5 +1,6 @@
 package org.jax.chc2go.go;
 
+import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.math3.stat.inference.TestUtils;
@@ -9,17 +10,14 @@ import org.monarchinitiative.phenol.formats.go.GoGaf21Annotation;
 import org.monarchinitiative.phenol.io.OntologyLoader;
 import org.monarchinitiative.phenol.io.obo.go.GoGeneAnnotationParser;
 import org.monarchinitiative.phenol.ontology.algo.InformationContentComputation;
-import org.monarchinitiative.phenol.ontology.data.Ontology;
-import org.monarchinitiative.phenol.ontology.data.TermAnnotation;
+import org.monarchinitiative.phenol.ontology.data.*;
 import org.monarchinitiative.phenol.analysis.*;
-import org.monarchinitiative.phenol.ontology.data.TermId;
-import org.monarchinitiative.phenol.ontology.data.TermIds;
 import org.monarchinitiative.phenol.ontology.similarity.PairwiseResnikSimilarity;
+import org.monarchinitiative.phenol.stats.*;
 
 import java.io.File;
 import java.util.*;
 
-import static org.jax.chc2go.chc.ChcInteraction.InteractionType.TWISTED;
 import static org.jax.chc2go.chc.ChcInteraction.InteractionType.UNDIRECTED_REF;
 
 /**
@@ -48,6 +46,10 @@ public class PairWiseGoSimilarity {
     /** Stores GO similarities for pairs of TermIds to avoid double calculations */
     private Map<TermIdPair,Double> memoizedSimilarities;
 
+    private Map<String,TermId> geneSymbol2IdMap;
+
+    private List<TermAnnotation> goAnnots;
+
 
     /**
      *
@@ -74,7 +76,7 @@ public class PairWiseGoSimilarity {
         System.out.println("[INFO] parsing  " + goGafFile.getAbsolutePath());
         try {
             final GoGeneAnnotationParser annotparser = new GoGeneAnnotationParser(goGafFile.getAbsolutePath());
-            List<TermAnnotation> goAnnots = annotparser.getTermAnnotations();
+            this.goAnnots = annotparser.getTermAnnotations();
             System.out.println("[INFO] parsed " + goAnnots.size() + " GO annotations.");
             associationContainer = new AssociationContainer(goAnnots);
             int n = associationContainer.getTotalNumberOfAnnotatedTerms();
@@ -89,8 +91,10 @@ public class PairWiseGoSimilarity {
         } catch (PhenolException e) {
             e.printStackTrace();
         }
-
     }
+
+
+
 
     public void analyzePairwiseSimilarities() {
         prepareGeneSymbolMapping();
@@ -128,7 +132,7 @@ public class PairWiseGoSimilarity {
            range.forEach(d -> rangeDS.addValue(d));
            double rangeMean = rangeDS.getMean();
            double rangeMedian = rangeDS.getPercentile(50.0);
-           double pVal = -1.0;
+           double pVal;
            System.out.printf("Number of observations: undirected: %d %s: %d\n", undirectedDS.getN(), itype, rangeDS.getN());
            if (undirectedDS.getN()>1 && rangeDS.getN() > 1) {
                // need at least two values to do a t-test
@@ -211,13 +215,101 @@ public class PairWiseGoSimilarity {
                     TermId dbObjectTermId = gaf.getDbObjectTermId();
                     //System.out.println(dbObjectSymbol +": " + dbObjectTermId.getValue());
                     geneSymbol2TermId.put(dbObjectSymbol,dbObjectTermId);
-                    continue;
                 }
             } catch (PhenolException e) {
                 e.printStackTrace();
             }
         }
         System.out.printf("[INFO] We parsed %d gene symbol to TermId mappings", geneIdToTermIds.size());
+    }
+
+
+    /**
+     * Get a list of all of the labeled genes in the population set.
+     * @param annots List of annotations of genes/diseases to GO/HPO terms etc
+     * @return an immutable set of TermIds representing the labeled genes/diseases
+     */
+    private Set<TermId> getPopulationSet(List<TermAnnotation> annots) {
+        Set<TermId> st = new HashSet<>();
+        for (TermAnnotation ann : annots) {
+            TermId geneId = ann.getLabel();
+            st.add(geneId);
+        }
+        return ImmutableSet.copyOf(st);
+    }
+
+    private StudySet getStudySet() {
+        Set<TermId> studyGenes = new HashSet<>();
+        for (ChcInteraction interact : chcInteractionList) {
+            String geneA = interact.getMaxGeneA();
+            String geneB = interact.getMaxGeneB();
+            TermId tidA = this.geneSymbol2TermId.get(geneA);
+            if (tidA == null) {
+                System.err.printf("[ERROR] COuld not find termid for %s, skipping.\n",geneA);
+            } else {
+                studyGenes.add(tidA);
+            }
+            TermId tidB = this.geneSymbol2TermId.get(geneB);
+            if (tidB == null) {
+                System.err.printf("[ERROR] COuld not find termid for %s, skipping.\n",geneB);
+            } else {
+                studyGenes.add(tidB);
+            }
+        }
+        return new StudySet(studyGenes,"study set", this.associationContainer, this.geneOntology);
+    }
+
+
+
+    public void performOverrepresentationAnalysis() {
+        if (this.geneSymbol2TermId == null || this.geneSymbol2TermId.isEmpty()) {
+            prepareGeneSymbolMapping();
+        }
+        int n_terms = this.geneOntology.countNonObsoleteTerms();
+        System.out.printf("[INFO] parsed %d non-obsolete GO terms.\n",n_terms);
+        int n_annoted_terms = this.associationContainer.getTotalNumberOfAnnotatedTerms();
+        System.out.printf("[INFO] Of these, %d terms were annotated.\n",n_annoted_terms);
+        System.out.printf("[INFO] Nukber of GO annotations: %d.\n", this.goAnnots.size());
+        Set<TermId> populationGenes = getPopulationSet(this.goAnnots);
+        StudySet populationSet = new StudySet(populationGenes,"population",associationContainer,this.geneOntology);
+        StudySet studySet = getStudySet();
+        Hypergeometric hgeo = new Hypergeometric();
+        MultipleTestingCorrection<Item2PValue> bonf = new Bonferroni<>();
+        TermForTermPValueCalculation tftpvalcal = new TermForTermPValueCalculation(this.geneOntology,
+            associationContainer,
+            populationSet,
+            studySet,
+            hgeo,
+            bonf);
+        int popsize = populationSet.getAnnotatedItemCount();
+        int studysize = studySet.getAnnotatedItemCount();
+        List<GoTerm2PValAndCounts> pvals = tftpvalcal.calculatePVals();
+        System.err.println("Total number of retrieved p values: " + pvals.size());
+        int n_sig = 0;
+        double ALPHA = 0.05;
+        System.out.println(String.format("Study set: %d genes. Population set: %d genes", studysize,popsize));
+        for (GoTerm2PValAndCounts item : pvals) {
+            double pval = item.getRawPValue();
+            double pval_adj = item.getAdjustedPValue();
+            TermId tid = item.getItem();
+            Term term = geneOntology.getTermMap().get(tid);
+            if (term == null) {
+                System.err.println("[ERROR] Could not retrieve term for " + tid.getValue());
+                continue;
+            }
+            String label = term.getName();
+            if (pval_adj > ALPHA) {
+                continue;
+            }
+            n_sig++;
+            double studypercentage = 100.0*(double)item.getAnnotatedStudyGenes()/studysize;
+            double poppercentage = 100.0*(double)item.getAnnotatedPopulationGenes()/popsize;
+            System.out.println(String.format("%s [%s]: %.2e (adjusted %.2e). Study: n=%d (%.1f%%); population: N=%d (%.1f%%)",
+                label, tid.getValue(), pval, pval_adj,item.getAnnotatedStudyGenes(), studypercentage,
+                item.getAnnotatedPopulationGenes(), poppercentage));
+        }
+        System.out.println(String.format("%d of %d terms were significant at alpha %.7f",
+        n_sig,pvals.size(),ALPHA));
     }
 
 

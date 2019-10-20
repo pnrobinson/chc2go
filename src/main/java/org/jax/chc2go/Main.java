@@ -3,16 +3,12 @@ package org.jax.chc2go;
 import com.beust.jcommander.JCommander;
 import com.beust.jcommander.Parameter;
 import com.beust.jcommander.ParameterException;
-import org.jax.chc2go.chc.ChcInteraction;
-import org.jax.chc2go.chc.ChcInteractionParser;
 import org.jax.chc2go.command.Chc2GoCommand;
 import org.jax.chc2go.command.DownloadCommand;
+import org.jax.chc2go.command.OverrepresentationCommand;
 import org.jax.chc2go.command.StatsCommand;
-import org.jax.chc2go.go.PairWiseGoSimilarity;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-
-import java.util.List;
 
 public class Main {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
@@ -25,11 +21,13 @@ public class Main {
         Main main = new Main();
         StatsCommand stats = new StatsCommand();
         DownloadCommand download = new DownloadCommand();
+        OverrepresentationCommand overrep = new OverrepresentationCommand();
 
         JCommander jc = JCommander.newBuilder()
                 .addObject(main)
                 .addCommand("download", download)
                 .addCommand("stats", stats)
+                .addCommand("overrep", overrep)
                 .build();
 
         try {
@@ -56,6 +54,13 @@ public class Main {
             case "stats":
                 chc2goCommand = stats;
                 break;
+            case "overrep":
+                chc2goCommand = overrep;
+                break;
+            default:
+                System.err.println("[ERROR] Did not recognize command: "+ command);
+                jc.usage();
+                System.exit(0);
         }
         chc2goCommand.run();
 

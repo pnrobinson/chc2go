@@ -15,9 +15,6 @@ import org.slf4j.LoggerFactory;
 @Parameters(commandDescription = "Download files for LIRICAL")
 public class DownloadCommand extends Chc2GoCommand {
     private static final Logger logger = LoggerFactory.getLogger(DownloadCommand.class);
-
-    @Parameter(names={"-d","--data"}, description ="directory to download data (default: data)" )
-    private String datadir="data";
     @Parameter(names={"-w","--overwrite"}, description = "overwrite prevously downloaded files, if any")
     private boolean overwrite;
 
@@ -27,8 +24,8 @@ public class DownloadCommand extends Chc2GoCommand {
 
     @Override
     public void run() {
-        logger.info(String.format("Download analysis to %s", datadir));
-        Downloader downloader = new Downloader(datadir, overwrite);
+        logger.info(String.format("Download analysis to %s", dataDir));
+        Downloader downloader = new Downloader(dataDir, overwrite);
         downloader.download();
     }
 }

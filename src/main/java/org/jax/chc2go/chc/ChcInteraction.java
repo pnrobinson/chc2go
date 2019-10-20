@@ -31,6 +31,13 @@ public class ChcInteraction {
     private String maxGeneA;
     private String maxGeneB;
 
+    public String getMaxGeneA() {
+        return maxGeneA;
+    }
+
+    public String getMaxGeneB() {
+        return maxGeneB;
+    }
 
     public double getSimilarity() {
         return similarity;
