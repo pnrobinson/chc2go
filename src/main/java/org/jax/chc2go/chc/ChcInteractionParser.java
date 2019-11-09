@@ -1,5 +1,7 @@
 package org.jax.chc2go.chc;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
+
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
@@ -29,21 +31,25 @@ public class ChcInteractionParser {
         String line;
         while ((line=br.readLine()) != null) {
             String[] fields = line.split("\t");
-            if (fields.length < 4) {
-                System.err.printf("[ERROR] Malformed line with %d fields (expected 4)", fields.length);
+            System.out.println(line);
+            System.out.println(fields.length);
+            if (fields.length != 6) {
+                System.err.printf("[ERROR] Malformed line with %d fields: %s.\n", fields.length, line);
+                continue;
             }
             String[] pos = fields[0].split(";");
             int distance = Integer.parseInt(fields[1]);
             String category = fields[2];
             String[] genes = fields[3].split(";");
+            String[] ratio = fields[4].split(":");
+            String typus = fields[5];
             try {
-                ChcInteraction chci = new ChcInteraction(pos, distance, category, genes);
+                ChcInteraction chci = new ChcInteraction(pos, distance, category, genes, ratio, typus);
                 interactionList.add(chci);
             } catch (Exception e) {
                 System.out.println("Could not parse line\n" + line);
                 e.printStackTrace();
             }
-
         }
         System.out.printf("[INFO] Parsed a total of %d interactions from %s.\n",
                 interactionList.size(),chcInteractionFile.getAbsolutePath());

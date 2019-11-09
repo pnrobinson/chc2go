@@ -38,6 +38,7 @@
     </Appenders>
     <Loggers>
         <Logger name="org.obolibrary.oboformat.parser.OBOFormatParser" level="error" />
+        <Logger name="org.openrdf.rio.datatypes.*" level="error" />
         <Logger name="org.openrdf.rio.RDFParserRegistry" level="error" />
         <logger name="uk.ac.manchester.cs.owl.owlapi.OWLDataFactoryInternalsImpl" level="error"/>
         <logger name="org.obolibrary.oboformat.parser.OBOFormatParser" level="error"/>
@@ -47,7 +48,7 @@
         <logger name="info.aduna.xml.XMLReaderFactory" level="error" />
         <logger name="info.aduna.lang.service.ServiceRegistry" level="error"/>
         <logger name="org.monarchinitiative.phenol.io.obo.OboOntologyLoader" level="error" />
-        <Root level="trace">
+        <Root level="error">
             <AppenderRef ref="Console" />
             <AppenderRef ref="File" />
         </Root>

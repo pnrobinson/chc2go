@@ -15,6 +15,7 @@ public class OverrepresentationCommand extends Chc2GoCommand {
             System.exit(1);
         }
         ChcInteractionParser parser = new ChcInteractionParser(this.chcInteractionPath);
+        if (true) { return; }
         setPaths();
         List<ChcInteraction> chcInteractionList = parser.getInteractions();
         PairWiseGoSimilarity psim = new PairWiseGoSimilarity(chcInteractionList, goOboPath, goGafPath);

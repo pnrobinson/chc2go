@@ -9,6 +9,13 @@ import java.util.List;
  * We parse in a file that is created on the basis of Diachromatic data
  * and that lists the genes contained within the individual digests, as
  * well as the nature of the interactions (directed, undirected).
+ * There are six columns
+ * 1. Position strings: chr8:11861759-11870747;chr8:11995989-12003281
+ * 2. Distance: 125242
+ * 3. Category: UR
+ * 4. Genes CTSB;DEFB134
+ * 5. simple:twisted 4:5
+ * 6. typus AA
  */
 public class ChcInteraction {
 
@@ -30,6 +37,8 @@ public class ChcInteraction {
     private double similarity;
     private String maxGeneA;
     private String maxGeneB;
+    private final int simple;
+    private final int twisted;
 
     public String getMaxGeneA() {
         return maxGeneA;
@@ -73,7 +82,7 @@ public class ChcInteraction {
         return genelistB;
     }
 
-    public ChcInteraction(String[] pos, int distance, String cat, String[] genes) {
+    public ChcInteraction(String[] pos, int distance, String cat, String[] genes, String[] ratio, String typus) {
         if (pos.length != 2) {
             throw new RuntimeException("Malformed position String with " + pos.length + "fields");
         }
@@ -113,6 +122,11 @@ public class ChcInteraction {
             // should really never happen!
             throw new RuntimeException("Malformed genes string with >2 fields");
         }
+        if (ratio.length != 2) {
+            throw new RuntimeException("Malformed raio field n="+ratio.length);
+        }
+        this.simple = Integer.parseInt(ratio[0]);
+        this.twisted = Integer.parseInt(ratio[1]);
 
     }
 
