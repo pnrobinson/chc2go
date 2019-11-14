@@ -1,31 +1,45 @@
 package org.jax.chc2go.chc;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
 import java.util.ArrayList;
 import java.util.List;
 
 /**
- * This class represents one Capture Hi-C (CHC) interaction, i.e., two
+ * <p>This class represents one Capture Hi-C (CHC) interaction, i.e., two
  * restriction digests that have been found to have CHC interactions (readpairs).
  * We parse in a file that is created on the basis of Diachromatic data
  * and that lists the genes contained within the individual digests, as
  * well as the nature of the interactions (directed, undirected).
+ * </p>
+ * <p>
  * There are six columns
- * 1. Position strings: chr8:11861759-11870747;chr8:11995989-12003281
- * 2. Distance: 125242
- * 3. Category: UR
- * 4. Genes CTSB;DEFB134
- * 5. simple:twisted 4:5
- * 6. typus AA
+ * </p>
+ * <ol>
+ * <li>Position strings: chr8:11861759-11870747;chr8:11995989-12003281</li>
+ * <li>Distance: 125242</li>
+ * <li>Category: UR</li>
+ * <li>Genes CTSB;DEFB134</li>
+ * <li>simple:twisted 4:5</li>
+ * <li>typus AA</li>
+ * </ol>
+ * <p>
+ *     The categories are: S: simple; T: twisted; U: undirected (all); UR: undirected reference; NA: indefinable. The
+ *     typus column currently includes AA (active/active) interactions.
+ * </p>
+ *
+ *
  */
 public class ChcInteraction {
+    private static final Logger logger = LoggerFactory.getLogger(ChcInteraction.class);
 
     public enum InteractionType {
         TWISTED,
         SIMPLE,
         UNDIRECTED,
         UNDIRECTED_REF,
-        UNKNOWN,
-        NO_GENE_IN_DIGEST
+        INDEFINABLE
     }
 
     private final String posA;
@@ -39,6 +53,7 @@ public class ChcInteraction {
     private String maxGeneB;
     private final int simple;
     private final int twisted;
+
 
     public String getMaxGeneA() {
         return maxGeneA;
@@ -105,8 +120,12 @@ public class ChcInteraction {
                 case "S":
                     itype = InteractionType.SIMPLE;
                     break;
+                case "NA":
+                    itype = InteractionType.INDEFINABLE;
+                    break;
                 default:
-                    itype = InteractionType.UNKNOWN;
+                    logger.error("Unexpected category abbreviation: {}", cat);
+                    itype = InteractionType.INDEFINABLE;
             }
             String[] genelst = genes[0].split(",");
             for (String g : genelst) {
@@ -116,8 +135,6 @@ public class ChcInteraction {
             for (String g : genelst) {
                 genelistB.add(g.trim());
             }
-        } else if (genes.length < 2) {
-            itype = InteractionType.NO_GENE_IN_DIGEST;
         } else {
             // should really never happen!
             throw new RuntimeException("Malformed genes string with >2 fields");
@@ -127,8 +144,13 @@ public class ChcInteraction {
         }
         this.simple = Integer.parseInt(ratio[0]);
         this.twisted = Integer.parseInt(ratio[1]);
-
     }
 
+    public int getSimple() {
+        return simple;
+    }
 
+    public int getTwisted() {
+        return twisted;
+    }
 }

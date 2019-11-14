@@ -1,6 +1,7 @@
 package org.jax.chc2go.chc;
 
-import com.fasterxml.jackson.annotation.JsonFormat;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.BufferedReader;
 import java.io.File;
@@ -10,7 +11,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 public class ChcInteractionParser {
-
+    private static final Logger logger = LoggerFactory.getLogger(ChcInteractionParser.class);
     private final File chcInteractionFile;
     private final List<ChcInteraction> interactionList;
 
@@ -31,8 +32,8 @@ public class ChcInteractionParser {
         String line;
         while ((line=br.readLine()) != null) {
             String[] fields = line.split("\t");
-            System.out.println(line);
-            System.out.println(fields.length);
+            //System.out.println(line);
+            //System.out.println(fields.length);
             if (fields.length != 6) {
                 System.err.printf("[ERROR] Malformed line with %d fields: %s.\n", fields.length, line);
                 continue;
