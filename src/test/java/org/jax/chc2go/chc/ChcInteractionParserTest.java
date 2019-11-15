@@ -13,7 +13,7 @@ public class ChcInteractionParserTest {
 
     private static ChcInteractionParser parser;
 
-
+    // the file has the first 100 lines of the mifsud file
     @BeforeAll
     static void init() {
         ClassLoader classLoader = ChcInteractionParserTest.class.getClassLoader();
