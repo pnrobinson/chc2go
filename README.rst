@@ -1,13 +1,13 @@
-######
-chc2go
-######
+#######
+GOtools
+#######
 
-Capture Hi-C interactions to Gene Ontology analysis
+Sandbox for some Gene Ontology related code including Capture Hi-C interactions to Gene Ontology analysis.
 
 Setup
 ~~~~~
 
-CHC2GO is a Java 8 command-line application that analyzes functional similarity of
+GOtools is a Java 11 command-line application that analyzes functional similarity of
 interacting digests in Capture Hi-C experiments. To set up the program, clone it from
 github and build it using maven.
 
@@ -16,19 +16,19 @@ github and build it using maven.
 .. code-block:: bash
 
     $ git clone https://github.com/pnrobinson/chc2go.git
-    $ cd chc2go
+    $ cd GOtools
     $ mvn package
 
 
 Downloading Files
 ~~~~~~~~~~~~~~~~~
-We can use the download mode of chc2go to get the
+We can use the download mode of GOtools to get the
 `Gene Ontology <http://geneontology.org>`_ files needed for the analysis and unzip them as needed.. 
   
 
 .. code-block:: java
 
-    $ java -jar CHC2GO.jar -c download
+    $ java -jar GOtools.jar -c download
 
 
 
@@ -56,10 +56,10 @@ in interactions with directed or non-directed orientation.
 
 .. code-block:: java
 
-    $ java -jar CHC2GO.jar stats -c mifsud_at_least_two_original_interactions_with_genesymbols.tsv \
+    $ java -jar GOtools.jar stats -c mifsud_at_least_two_original_interactions_with_genesymbols.tsv
 
 
-The app requires roughly **39 minutes** to complete. The implementation of the algorithm is currentlynot as efficient as possible.
+The app requires roughly **39 minutes** to complete. The implementation of the algorithm is currently not as efficient as possible.
 
 The output looks like this
 
@@ -85,4 +85,4 @@ This mode looks for Gene Ontology terms that are overrepresented in the interact
 
 . code-block:: java
 
-    $ java -jar CHC2GO.jar overrep -c mifsud_at_least_two_original_interactions_with_genesymbols.tsv 
+    $ java -jar GOtools.jar overrep -c mifsud_at_least_two_original_interactions_with_genesymbols.tsv
