@@ -27,6 +27,7 @@ public class Main {
                 .addObject(main)
                 .addCommand("download", download)
                 .addCommand("stats", stats)
+                .addCommand("mgsa")
                 .addCommand("overrep", overrep)
                 .build();
 

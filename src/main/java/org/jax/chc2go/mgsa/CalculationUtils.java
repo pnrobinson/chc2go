@@ -71,13 +71,17 @@ public class CalculationUtils {
         // are annotated to the GO term. The matrix is not square, but instead we have an array of variable length
         // arrays with the fields of the array holding the index of the gene as per annotatedItemList
         for (int j = 0; j < goTermList.size(); j++) {
-            TermId goId = goTermList.get(i);
+            TermId goId = goTermList.get(j);
             Collection<TermId> geneCollection = goTermToAnnotatedGenesMap.get(goId);
             int N = geneCollection.size();
             termLinks[i] = new int[N];
             int k = 0;
             for (TermId g : geneCollection) {
-                int idx = this.goTermToIndexMap.get(g);
+                Integer idx = this.goTermToIndexMap.get(g);
+                if (idx == null || idx < 0) {
+                    System.err.println("[ERROR] Could not get index for gene " + g.getValue());
+                    continue;
+                }
                 termLinks[i][k] = idx;
                 k++;
             }
@@ -85,6 +89,33 @@ public class CalculationUtils {
 
     }
 
+
+    TermId getGoTermAtIndex(int i) {
+        return this.goTermList.get(i);
+    }
+
+    public int getAnnotatedGeneCount(TermId goTermId) {
+        Integer i = goTermToIndexMap.get(goTermId);
+        if (i == null || i < 0) {
+            System.err.println("[ERROR] Could not find index for GO Term " + goTermId);
+            return 0;
+        }
+        int [] genes = this.termLinks[i];
+        return genes.length;
+    }
+
+    public boolean []  getBooleanArrayobservedItems(Set<TermId> geneIds) {
+        boolean [] observed = new boolean[this.n_genes];
+        for (TermId gene : geneIds) {
+            Integer i = this.annotatedItemToIndexMap.get(gene);
+            if (i == null || i < 0) {
+                System.err.println("[ERROR] Could not get index for gene " + gene.getValue());
+                continue;
+            }
+            observed[i] = true;
+        }
+        return observed;
+    }
 
 
     /**

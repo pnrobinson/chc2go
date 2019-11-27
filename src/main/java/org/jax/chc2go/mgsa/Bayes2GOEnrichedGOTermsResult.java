@@ -22,7 +22,7 @@ public class Bayes2GOEnrichedGOTermsResult
     private Bayes2GOScore score;
 
     /** A linear list containing properties for go terms */
-    protected List<AbstractGOTermProperties> list = new ArrayList<AbstractGOTermProperties>();
+    protected List<AbstractGOTermProperties> list = new ArrayList<>();
 
     /** Maps the go term to an integer (for accesses in constant time) */
     private Map<TermId, Integer> term2Index = new HashMap<>();
@@ -44,6 +44,10 @@ public class Bayes2GOEnrichedGOTermsResult
     double p_adjusted;
     double p_min;
     double marg;
+
+    TermId goTerm;
+    int annotatedStudyGenes;
+    int annotatedPopulationGenes;
 
 
     /* FIXME: Remove this */
@@ -77,5 +81,21 @@ public class Bayes2GOEnrichedGOTermsResult
 //    public IntMapper<TermID> getTermMapper()
 //    {
 //        return termMapper;
-//    }
+//    }\
+
+
+    /**
+     *
+     * @param prop
+     */
+    public void addGOTermProperties(AbstractGOTermProperties prop)
+    {
+        if (prop.term == null)
+            throw new IllegalArgumentException("prop.term mustn't be null");
+
+        list.add(prop);
+        term2Index.put(prop.term, index);
+        index++;
+    }
+
 }

@@ -1,14 +1,15 @@
 package org.jax.chc2go.mgsa;
 
-package ontologizer.calculation.b2g;
-
 import org.monarchinitiative.phenol.analysis.AssociationContainer;
 import org.monarchinitiative.phenol.analysis.StudySet;
+import org.monarchinitiative.phenol.base.PhenolException;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
 import org.monarchinitiative.phenol.ontology.data.TermId;
 
+
 import static java.util.logging.Level.INFO;
 
+import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
 import java.util.logging.Logger;
@@ -44,17 +45,9 @@ public class Bayes2GOCalculation
     private int mcmcSteps = 1020000;
     private int updateReportTime = 1000; /* Update report time in ms */
 
-    private Bayes2GOCalculationProgress bayes2GOCalculationProgress;
+    private AssociationContainer goAssociations;
 
-    /**
-     * Provided dedicated feedback for bayes2go calculation.
-     *
-     * @author Sebastian Bauer
-     */
-    public static interface Bayes2GOCalculationProgress
-    {
-        void update(int iterationNumber, int step, double acceptProb, int numAccept, double score);
-    }
+
 
 
     public Bayes2GOCalculation()
@@ -222,22 +215,11 @@ public class Bayes2GOCalculation
                                                    AssociationContainer goAssociations, StudySet populationSet,
                                                    StudySet studySet)
     {
+        this.goAssociations = goAssociations;
        if (studySet.getAnnotatedItemCount() == 0)
             return new Bayes2GOEnrichedGOTermsResult(graph,goAssociations,studySet,populationSet.getAnnotatedItemCount());
 
-        /* For a valued calculation, ony the study set is interesting as it contains all genes
-        boolean valuedCalculation = studySet.hasOnlyValuedItemAttributes();
-
-        if (valuedCalculation)
-        {
-            logger.log(INFO, "We have values!");
-        } else
-        {
-            logger.log(INFO, "We don't have values!");
-        }
-*/
-
-        Bayes2GOEnrichedGOTermsResult result = new Bayes2GOEnrichedGOTermsResult(graph,goAssociations,studySet,populationSet.getGeneCount());
+        Bayes2GOEnrichedGOTermsResult result = new Bayes2GOEnrichedGOTermsResult(graph,goAssociations,studySet,populationSet.getAnnotatedItemCount());
        // result.setCalculationName(this.getName());
 
       //  TermEnumerator populationEnumerator = populationSet.enumerateTerms(graph, goAssociations);
@@ -250,18 +232,17 @@ public class Bayes2GOCalculation
                 " numberOfStudy=" + studySet.getAnnotatedItemCount());
 
         long start = System.currentTimeMillis();
-        calculateByMCMC(graph, result, populationEnumerator, studyEnumerator, populationSet, studySet, valuedCalculation);//, llr);
+        try {
+            calculateByMCMC(graph, result, populationSet, studySet);//, llr);
+        } catch (PhenolException e) {
+            e.printStackTrace();
+            System.exit(1); // TODO make more robust
+        }
         long end = System.currentTimeMillis();
         logger.log(INFO, (end - start) + "ms");
         return result;
     }
 
-    public Bayes2GOEnrichedGOTermsResult calculateStudySet(Ontology graph,
-                                                   AssociationContainer goAssociations, PopulationSet populationSet,
-                                                   StudySet studySet, AbstractTestCorrection testCorrection)
-    {
-        return calculateStudySet(graph, goAssociations, populationSet, studySet);
-    }
 
     public void setUsePrior(boolean usePrior)
     {
@@ -270,52 +251,32 @@ public class Bayes2GOCalculation
 
     private void calculateByMCMC(Ontology graph,
                                  Bayes2GOEnrichedGOTermsResult result,
-                                 TermEnumerator populationEnumerator,
-                                 TermEnumerator studyEnumerator,
-                                 PopulationSet populationSet,
-                                 StudySet studySet,
-                                 boolean valuedCalculation)
+                                 StudySet populationSet,
+                                 StudySet studySet) throws PhenolException
     {
-        if (valuedCalculation)
-        {
-            throw new IllegalArgumentException("Valued calculation not supported at the moment!");
-        }
-        List<TermId> relevantTermList = graph.filterRelevant(populationEnumerator.getAllAnnotatedTermsAsList());
-        IntMapper<TermId> termMapper = IntMapper.create(relevantTermList);
-        IntMapper<ByteString> geneMapper = IntMapper.create(populationEnumerator.getGenesAsList());
-        int [][] termLinks = CalculationUtils.makeTermLinks(populationEnumerator, termMapper, geneMapper);
-        boolean [] observedItems = geneMapper.getDense(studyEnumerator.getGenes());
+        List<TermId> relevantTermList = new ArrayList<>(populationSet.getAnnotatingTermIds());// graph.filterRelevant(populationEnumerator.getAllAnnotatedTermsAsList());
+        //IntMapper<TermId> termMapper = IntMapper.create(relevantTermList);
+       // IntMapper<ByteString> geneMapper = IntMapper.create(populationEnumerator.getGenesAsList());
+        CalculationUtils calcUtils = new CalculationUtils(goAssociations);
+        int [][] termLinks = calcUtils.getTermLinks();
+        boolean [] observedItems = calcUtils.getBooleanArrayobservedItems(studySet.getAnnotatedItemTermIds()); //geneMapper.getDense(studyEnumerator.getGenes());
         double [] r = calculate(termLinks, observedItems);
 
         for (int i = 0; i < r.length; i++)
         {
-            TermId tid = termMapper.get(i);
-            Bayes2GOEnrichedGOTermsResult prop = new Bayes2GOEnrichedGOTermsResult();
+            TermId tid = calcUtils.getGoTermAtIndex(i);
+            Bayes2GOGOTermProperties prop = new Bayes2GOGOTermProperties();
             prop.term = tid;
-            prop.annotatedStudyGenes = studyEnumerator.getAnnotatedGenes(tid).totalAnnotatedCount();
-            prop.annotatedPopulationGenes = populationEnumerator.getAnnotatedGenes(tid).totalAnnotatedCount();
+            prop.annotatedStudyGenes = calcUtils.getAnnotatedGeneCount(tid);
+                   // studyEnumerator.getAnnotatedGenes(tid).totalAnnotatedCount();
+            prop.annotatedPopulationGenes = populationSet.getAnnotatedItemCount();
+        //populationEnumerator.getAnnotatedGenes(tid).totalAnnotatedCount();
             prop.marg = r[i];
-
-            /* At the moment, we need these fields for technical reasons */
-            //prop.p = 1 - r[i];
-            //prop.p_adjusted = prop.p;
-           // prop.p_min = 0.001;
-
             result.addGOTermProperties(prop);
-
         }
 
     }
 
-    /**
-     * Set the callback interface for notifications about a special Bayes2GO progress
-     *
-     * @param bayes2GOCalculationProgress
-     */
-    public void setBayes2GOCalculationProgress(Bayes2GOCalculationProgress bayes2GOCalculationProgress)
-    {
-        this.bayes2GOCalculationProgress = bayes2GOCalculationProgress;
-    }
 
     public String getDescription()
     {
@@ -439,8 +400,6 @@ public class Bayes2GOCalculation
             int numAccepts = 0;
             int numRejects = 0;
 
-            if (calculationProgress != null)
-                calculationProgress.init(maxSteps);
 
             double maxScore = score;
             int [] maxScoredTerms = fixedAlphaBetaScore.getActiveTerms();
@@ -476,8 +435,6 @@ public class Bayes2GOCalculation
                             " exp=" + expectedNumberOfTerms + " usePrior=" + usePrior + ")");
                     start = now;
 
-                    if (calculationProgress != null)
-                        calculationProgress.update(t);
                 }
 
                 long oldPossibilities = fixedAlphaBetaScore.getNeighborhoodSize();
@@ -502,9 +459,6 @@ public class Bayes2GOCalculation
                 if (t>burnin)
                     fixedAlphaBetaScore.record();
 
-
-                if (bayes2GOCalculationProgress != null)
-                    bayes2GOCalculationProgress.update(i, t, acceptProb, numAccepts, score);
             }
 
             if (fixedAlphaBetaScore != null)
