@@ -49,57 +49,90 @@ import java.util.Set;
 public class UniprotTextParser {
     private final String uniprotTextPath;
 
-/*
+    private List<UniprotEntry> upentries = new ArrayList<>();
 
-RT
-OS
-RX
-GN
-OX
-KW
-DR
-FT
-RA
-DT
-RC
-OC
-RG
-PE
-RL
-ID
-RN
-RP
-SQ
-*/
-    private List<String> idLines = new ArrayList<>();
-    private List<String> deLines = new ArrayList<>(); // definition lines
-    private List<String> gnLines = new ArrayList<>(); // gene lines
-    private List<String> acLines;
+    private List<String> idLines;
+    private List<String> deLines; // definition lines
+    private List<String> gnLines; // gene lines
+    private List<String> acLines; // accession number
+    private List<String> ccLines; // comments, with function
+    private List<String> drLines; // various cross refs
+    private List<String> peLines; // evidence..
+    private List<String> kwLines; // keywords
+    private List<String> ftLines; // features
+
 
     public UniprotTextParser(String path) {
         uniprotTextPath = path;
+        resetLists();
         parse();
+       //debugPrintEntries();
+        System.out.printf("We got %d UniProt entries.\n",upentries.size());
+    }
+
+
+
+    private void debugPrintEntries() {
+        int c = 0;
+        for (UniprotEntry e : upentries) {
+            c++;
+            System.out.println(c +": "+e);
+        }
+    }
+
+    private void resetLists() {
+        idLines = new ArrayList<>();
+        deLines = new ArrayList<>();
+        gnLines = new ArrayList<>();
+        acLines = new ArrayList<>();
+        ccLines = new ArrayList<>();
+        drLines = new ArrayList<>();
+        peLines = new ArrayList<>();
+        kwLines = new ArrayList<>();
+        ftLines = new ArrayList<>();
     }
 
 
     private void createEntry() {
-        System.out.println("ENTRY");
+        UniprotEntry entry = new
+            UniprotEntry(idLines,
+                deLines,
+                gnLines,
+                acLines,
+                ccLines,
+                drLines,
+                peLines,
+                kwLines,
+                ftLines);
+        upentries.add(entry);
+        resetLists();
     }
 
 
     private void parse() {
-        Set<String> keys = new HashSet<>();
+        boolean sequenceMode = false; // SQ starts a block where the keyword is not repeated
         try (BufferedReader br = new BufferedReader(new FileReader(this.uniprotTextPath))){
             String line;
             while ((line = br.readLine()) != null) {
-                //System.out.println(line);
                 String key = line.substring(0,2);
                 if (key.equals("//")) {
                     createEntry();
+                    sequenceMode = false;
+                    continue;
+                }
+                if (sequenceMode) {
+                    continue;
+                }
+                if (line.length() < 6) {
+                    System.err.println("Short line: " + line);
+                    continue;
                 }
                 String restOfLine = line.substring(5);
 
                 switch (key) {
+                    case "AC":
+                        acLines.add(restOfLine);
+                        break;
                     case "ID":
                         idLines.add(restOfLine);
                         break;
@@ -109,22 +142,49 @@ SQ
                     case "GN":
                         gnLines.add(restOfLine);
                         break;
+                    case "CC":
+                        ccLines.add(restOfLine);
+                        break;
+                    case "DR":
+                        drLines.add(restOfLine);
+                        break;
+                    case "PE":
+                        peLines.add(restOfLine);
+                        break;
+                    case "KW":
+                        kwLines.add(restOfLine);
+                        break;
+                    case "FT":
+                        ftLines.add(restOfLine);
+                        break;
                     case "DT": // no op, Date
                     case "OS": // no op, should always be Homo sapiens
                     case "OC": // no op, genera
-
+                    case "OX": // no op, taxon
+                    case "RN":
+                    case "RP": // no open, references
+                    case "RA":
+                    case "RT":
+                    case "RX":
+                    case "RL":
+                    case "RC":
+                    case "RG":
+                        break;
+                    case "SQ": // skip sequence, we do not need it now
+                        sequenceMode = true;
+                        break;
+                    default:
+                        System.out.println(key + ":" + restOfLine);
+                        System.exit(1);
                 }
-                keys.add(key);
-               // System.out.println(key);
             }
         } catch (IOException e) {
             e.printStackTrace();
         }
-        for (String k : keys) {
-            System.out.println(k);
-        }
+
     }
 
-
-
+    public List<UniprotEntry> getUpentries() {
+        return upentries;
+    }
 }

@@ -27,6 +27,26 @@ public class TranscriptionFactor {
     }
 
 
+    public String getName() {
+        return name;
+    }
+
+    public double getCoefficient() {
+        return coefficient;
+    }
+
+    public double getError() {
+        return error;
+    }
+
+    public double getZvalue() {
+        return Zvalue;
+    }
+
+    public double getPvalue() {
+        return Pvalue;
+    }
+
     public boolean positive() {
         return coefficient > 0;
     }

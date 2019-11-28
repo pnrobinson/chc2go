@@ -39,6 +39,10 @@ public class TfParser {
             }
 
             while ((line = br.readLine()) != null) {
+                if (line.startsWith("(Intercept)")) {
+                    System.err.println("[WARNING] Skipping line " + line);
+                    continue;
+                }
                 String [] fields = line.split("\t");
                 TranscriptionFactor tf = new TranscriptionFactor(fields);
                 if (tf.significant()) {
