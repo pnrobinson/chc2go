@@ -3,18 +3,26 @@ package org.jax.gotools.analysis;
 
 import com.google.common.collect.ImmutableMap;
 import com.google.common.collect.ImmutableSet;
+import org.jax.gotools.stats.ChiSquared;
 import org.jax.gotools.string.PPI;
 import org.jax.gotools.string.StringParser;
 import org.jax.gotools.tf.TranscriptionFactor;
 import org.jax.gotools.tf.UniprotEntry;
+import org.monarchinitiative.phenol.analysis.AssociationContainer;
+import org.monarchinitiative.phenol.base.PhenolException;
+import org.monarchinitiative.phenol.io.OntologyLoader;
+import org.monarchinitiative.phenol.io.obo.go.GoGeneAnnotationParser;
+import org.monarchinitiative.phenol.ontology.algo.OntologyAlgorithm;
+import org.monarchinitiative.phenol.ontology.data.Ontology;
+import org.monarchinitiative.phenol.ontology.data.TermAnnotation;
+import org.monarchinitiative.phenol.ontology.data.TermId;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
-import java.util.HashMap;
-import java.util.List;
-import java.util.Map;
-import java.util.Set;
+import java.util.*;
+
 
 /**
  * Compare lists of transcription factors with repect to Gene Ontology annotations, PFAM modules, and STRING-encoded
@@ -63,45 +71,45 @@ public class TranscriptionFactorCompare {
     }
 
     private void initializeTargetList() {
-        ImmutableSet.Builder<Integer> builder = new ImmutableSet.Builder();
+        ImmutableSet.Builder<Integer> builderA = new ImmutableSet.Builder();
         for (TranscriptionFactor tf : tflstA) {
             String id = tf.getName();
             if (name2enspMap.containsKey(id)) {
                 Integer i = name2enspMap.get(id);
-                builder.add(i);
+                builderA.add(i);
             } else {
                 System.err.println("[WARNING] Could not find ENSP for " + id);
             }
         }
-        this.targetsetA = builder.build();
-        builder = new ImmutableSet.Builder();
+        this.targetsetA = builderA.build();
+        ImmutableSet.Builder<Integer> builderB = new ImmutableSet.Builder();
         for (TranscriptionFactor tf : tflstB) {
             String id = tf.getName();
             if (name2enspMap.containsKey(id)) {
                 Integer i = name2enspMap.get(id);
-                builder.add(i);
+                builderB.add(i);
             } else {
                 System.err.println("[WARNING] Could not find ENSP for " + id);
             }
         }
-        this.targetsetB = builder.build();
+        this.targetsetB = builderB.build();
     }
 
 
     public void parseString(String gzipPath) {
-       StringParser parser = new StringParser(gzipPath, targetsetA, targetsetB);
+        StringParser parser = new StringParser(gzipPath, targetsetA, targetsetB);
         this.ppisA = parser.getSetAppis();
         this.ppisB = parser.getSetBppis();
     }
 
     public void parseRBPs(String path) {
         ImmutableSet.Builder<Integer> builder = new ImmutableSet.Builder<>();
-        try (BufferedReader br = new BufferedReader(new FileReader(path))){
+        try (BufferedReader br = new BufferedReader(new FileReader(path))) {
             String line;
 
             while ((line = br.readLine()) != null) {
                 //System.out.println(line);
-                String []F = line.split("\t");
+                String[] F = line.split("\t");
                 if (F.length != 3) {
                     throw new RuntimeException("Bad line for RBP file: " + line);
                 }
@@ -113,7 +121,7 @@ public class TranscriptionFactorCompare {
             e.printStackTrace();
         }
         rbps = builder.build();
-        System.out.printf("[INFO] Got %d RBPs as ENSP\n",rbps.size());
+        System.out.printf("[INFO] Got %d RBPs as ENSP\n", rbps.size());
     }
 
 
@@ -131,14 +139,95 @@ public class TranscriptionFactorCompare {
         }
         for (PPI ppi : ppisB) {
             n_total_B++;
-            if (this.rbps.contains(ppi.getProtein1()) ||  this.rbps.contains(ppi.getProtein2())) {
+            if (this.rbps.contains(ppi.getProtein1()) || this.rbps.contains(ppi.getProtein2())) {
                 n_RBP_interactions_B++;
             }
         }
         System.out.printf("A: %d total interactions, B: %d total interactions\n", n_totalA, n_total_B);
-        System.out.printf("A: %d RBP interactions; B: %d RBP interactions.\n", n_RBP_interactions_A, n_RBP_interactions_B);
+        System.out.printf("A: %d RBP interactions (%.2f%% of total); B: %d RBP interactions %.2f%% of total).\n",
+                n_RBP_interactions_A, 100.0 * (double) n_RBP_interactions_A / (double) n_totalA,
+                n_RBP_interactions_B, 100.0 * (double) n_RBP_interactions_B / (double) n_total_B);
     }
 
+
+    public void compareGO(String go) throws PhenolException {
+        final Ontology geneOntology = OntologyLoader.loadOntology(new File(go));
+        Map<TermId, Integer> mapA = new HashMap<>();
+        Map<TermId, Integer> mapB = new HashMap<>();
+        //final GoGeneAnnotationParser annotparser = new GoGeneAnnotationParser(gaf);
+//        List<TermAnnotation> goAnnots = annotparser.getTermAnnotations();
+//        System.out.println("[INFO] parsed " + goAnnots.size() + " GO annotations.");
+//        AssociationContainer associationContainer = new AssociationContainer(goAnnots);
+//        int n = associationContainer.getTotalNumberOfAnnotatedTerms();
+        // associationContainer.
+        int CC=0;
+        int AA=0;
+        for (TranscriptionFactor tf : tflstA) {
+            String name = tf.getName();
+            AA++;
+            Integer i = name2enspMap.get(name);
+            if (i == null) {
+                System.err.println("[WARNING] Could not find ENSP for " + name);
+                continue;
+            }
+            UniprotEntry e = spidToUniprotMap.get(i);
+            if (e == null) {
+                System.err.println("[WARNING] Could not find UniProt entry for " + name);
+                continue;
+            }
+            List<TermId> goIds = e.getGoIds();
+            Set<TermId> uniqueTerms = new HashSet<>();
+            for (TermId t : goIds) {
+                if (!geneOntology.getTermMap().containsKey(t)) {
+                    System.err.println("[WARNING] go.obo did not contain " + t.getValue());
+                    continue;
+                }
+                Set<TermId> ancs = OntologyAlgorithm.getAncestorTerms(geneOntology, t, true);
+                uniqueTerms.addAll(ancs);
+            }
+
+        }
+        for (TranscriptionFactor tf : tflstB) {
+            String name = tf.getName();
+            Integer i = name2enspMap.get(name);
+            if (i == null) {
+                System.err.println("[WARNING] Could not find ENSP for " + name);
+                continue;
+            }
+            UniprotEntry e = spidToUniprotMap.get(i);
+            if (e == null) {
+                System.err.println("[WARNING] Could not find UniProt entry for " + name);
+                continue;
+            }
+            List<TermId> goIds = e.getGoIds();
+            Set<TermId> uniqueTerms = new HashSet<>();
+            for (TermId t : goIds) {
+                if (!geneOntology.getTermMap().containsKey(t)) {
+                    System.err.println("[WARNING] go.obo did not contain " + t.getValue());
+                    continue;
+                }
+                Set<TermId> ancs = OntologyAlgorithm.getAncestorTerms(geneOntology, t, true);
+                uniqueTerms.addAll(ancs);
+            }
+            for (TermId w : uniqueTerms) {
+                mapA.putIfAbsent(w, 0);
+                mapA.merge(w, 1, Integer::sum);
+                if (w.getValue().equals("GO:0050789")) CC++;
+            }
+        }
+        // when we get here, mapA and mapB have term ids and counts.
+        List<ChiSquared> c2list = ChiSquared.fromAnotationMaps(mapA, tflstA.size(), mapB, tflstB.size());
+        for (ChiSquared c : c2list) {
+            if (true ||     c.isSignificant()) {
+                if (!geneOntology.getTermMap().containsKey(c.getTermId())) {
+                    System.err.println("[WARNING] Could not retrieve " + c.getTermId().getValue());
+                    continue;
+                }
+                String label = geneOntology.getTermMap().get(c.getTermId()).getName();
+                System.out.println(label + ": " + c);
+            }
+        }
+    }
 
 
     public static class Builder {

@@ -30,6 +30,7 @@ public class StringParser {
         this.pathToGzippedStringFile = gzipPath;
         targetSetA = targetsA;
         targetSetB = targetsB;
+        System.out.printf("Target set A n=%d set B n=%d", targetsA.size(), targetsB.size());
         setAppis = new ArrayList<>();
         setBppis = new ArrayList<>();
         parse();
@@ -44,13 +45,14 @@ public class StringParser {
     }
 
     private void parse() {
-        int c= 0;
+        int c = 0;
         try{
             BufferedReader br = new BufferedReader(new InputStreamReader(
                     new GZIPInputStream(new FileInputStream(this.pathToGzippedStringFile))));
             String line = br.readLine(); // header
             while ((line=br.readLine()) != null) {
                 //System.out.println(line);
+                c++;
                 String []F = line.split("\\s+");
                 if (F.length != 3) {
                     throw new RuntimeException("Bad String line: " + line + ", length=" + F.length);
@@ -75,6 +77,8 @@ public class StringParser {
         } catch (IOException e) {
             e.printStackTrace();
         }
+        System.out.printf("[INFO] Parsed %d STRING PPIs\n", c);
+        System.out.printf("[INFO] SetA (n=%d): %d PPIS, Set B (n=%d): %d PPIS\n", targetSetA.size(), setAppis.size(), targetSetB.size(),setBppis.size());
     }
 
     private Integer ensp2int(String ensp) {

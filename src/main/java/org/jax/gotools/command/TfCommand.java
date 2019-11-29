@@ -7,6 +7,7 @@ import org.jax.gotools.tf.TfParser;
 import org.jax.gotools.tf.TranscriptionFactor;
 import org.jax.gotools.tf.UniprotEntry;
 import org.jax.gotools.tf.UniprotTextParser;
+import org.monarchinitiative.phenol.base.PhenolException;
 
 import java.io.File;
 import java.io.FileReader;
@@ -33,14 +34,18 @@ public class TfCommand extends Chc2GoCommand {
         UniprotTextParser upParser = new UniprotTextParser(pathToUniprotFile);
         List<UniprotEntry> upentrylist = upParser.getUpentries();
         String stringDir = "/Users/peterrobinson/Documents/data/string";
-        String stringInfo = String.format("%s%s%s",stringDir, File.separator, "9606.protein.info.v11.0.txt.gz");
+        //String stringInfo = String.format("%s%s%s",stringDir, File.separator, "9606.protein.info.v11.0.txt.gz");
        // StringInfoParser siparser = new StringInfoParser(stringInfo);
         String stringLinks = String.format("%s%s%s", stringDir, File.separator, "9606.protein.links.v11.0.txt.gz");
         //StringParser sparser = new StringParser(stringLinks, positiveSignificant, negativeSignificant);
 
+
+        System.out.println("[INFO] Target set A: Positive significant");
+        System.out.println("[INFO] Target set B: NON significant");
+
         TranscriptionFactorCompare.Builder builder = new TranscriptionFactorCompare.Builder()
                 .transcriptionFactorListA(positiveSignificant)
-                .transcriptionFactorListB(nonSignificant)
+                .transcriptionFactorListB(negativeSignificant)
                 .uniprotEntries(upentrylist);
 
         TranscriptionFactorCompare tfcompare = builder.build();
@@ -48,5 +53,24 @@ public class TfCommand extends Chc2GoCommand {
         String rbpPath = "/Users/peterrobinson/Documents/data/string/RBP.tsv";
         tfcompare.parseRBPs(rbpPath);
         tfcompare.compareSetAandB();
+
+        System.out.println("[INFO] Target set A: Negative significant");
+        System.out.println("[INFO] Target set B: NON significant");
+
+        builder = new TranscriptionFactorCompare.Builder()
+                .transcriptionFactorListA(negativeSignificant)
+                .transcriptionFactorListB(nonSignificant)
+                .uniprotEntries(upentrylist);
+
+        tfcompare = builder.build();
+        tfcompare.parseString(stringLinks);
+        tfcompare.parseRBPs(rbpPath);
+        tfcompare.compareSetAandB();
+        final String goPath = "/Users/peterrobinson/Documents/data/go/go.obo";
+        try {
+            tfcompare.compareGO(goPath);
+        } catch (PhenolException e) {
+            e.printStackTrace();
+        }
     }
 }
