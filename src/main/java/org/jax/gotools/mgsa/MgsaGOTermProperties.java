@@ -7,7 +7,7 @@ package org.jax.gotools.mgsa;
  * @author Sebastian Bauer
  */
 
-public class Bayes2GOGOTermProperties extends AbstractGOTermProperties
+public class MgsaGOTermProperties extends AbstractGOTermProperties
 {
     private static final String [] propertyNames = new String[]{
             "ID","Pop.total","Pop.term","Study.total","Study.term","marg"

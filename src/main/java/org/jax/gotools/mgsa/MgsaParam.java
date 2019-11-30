@@ -2,11 +2,12 @@ package org.jax.gotools.mgsa;
 
 /**
  * A basic class to represent different settings parameter.
+ * TODO is this needed for MCMC only?
  *
  * @author sba
  *
  */
-abstract public class B2GParam
+abstract public class MgsaParam
 {
     static public enum Type
     {
@@ -17,12 +18,12 @@ abstract public class B2GParam
 
     private Type type;
 
-    B2GParam(Type type)
+    MgsaParam(Type type)
     {
         this.type = type;
     }
 
-    B2GParam(B2GParam p)
+    MgsaParam(MgsaParam p)
     {
         this.type = p.type;
     }

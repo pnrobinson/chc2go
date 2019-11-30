@@ -1,7 +1,7 @@
 package org.jax.gotools.mgsa;
 
 
-class IntegerParam extends B2GParam
+class IntegerParam extends MgsaParam
 {
     private int val;
 

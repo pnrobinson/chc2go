@@ -1,11 +1,11 @@
 package org.jax.gotools.mgsa;
 
-public abstract class Bayes2GOScoreBase
+public abstract class MgsaScoreBase
 {
     /** Indicates the activation state of a term */
     private boolean [] isActive;
 
-    /** Maps a term id to the ids of the genes to that the term is annotated */
+    /** Maps a term id to the ids of the genes to which the term is annotated */
     private int [][] termLinks;
 
     /**
@@ -33,7 +33,7 @@ public abstract class Bayes2GOScoreBase
     /** Array that indicate the activation counts of the genes */
     private int [] activeHiddenGenes;
 
-    public Bayes2GOScoreBase(int [][] termLinks, int numItems)
+    public MgsaScoreBase(int [][] termLinks, int numItems)
     {
         this.termLinks = termLinks;
 

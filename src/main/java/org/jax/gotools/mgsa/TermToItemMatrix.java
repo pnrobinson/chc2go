@@ -16,7 +16,7 @@ import java.util.*;
  * This replaces the original CalculationUtils.java and uses Java8 collections.
  */
 
-public class CalculationUtils {
+public class TermToItemMatrix {
 
     private final int n_genes;
     private final int n_annotated_terms;
@@ -32,7 +32,7 @@ public class CalculationUtils {
     private final int [][] termLinks;
 
 
-    CalculationUtils(AssociationContainer assocs) throws PhenolException {
+    TermToItemMatrix(AssociationContainer assocs) throws PhenolException {
         Set<TermId> genes = assocs.getAllAnnotatedGenes();
         Set<TermId> goTerms = new HashSet<>();
         Multimap<TermId, TermId> goTermToAnnotatedGenesMap = ArrayListMultimap.create();
@@ -67,6 +67,8 @@ public class CalculationUtils {
         }
         goTermList = builder.build();
         goTermToIndexMap = mapBuilder.build();
+        int gotIndex = 0;
+        int missedIndex = 0;
         // Now create the array. Each row represents one GO term, with the columns representing the genes that
         // are annotated to the GO term. The matrix is not square, but instead we have an array of variable length
         // arrays with the fields of the array holding the index of the gene as per annotatedItemList
@@ -74,19 +76,22 @@ public class CalculationUtils {
             TermId goId = goTermList.get(j);
             Collection<TermId> geneCollection = goTermToAnnotatedGenesMap.get(goId);
             int N = geneCollection.size();
-            termLinks[i] = new int[N];
+            termLinks[j] = new int[N];
             int k = 0;
             for (TermId g : geneCollection) {
-                Integer idx = this.goTermToIndexMap.get(g);
+                Integer idx = this.annotatedItemToIndexMap.get(g);
                 if (idx == null || idx < 0) {
-                    System.err.println("[ERROR] Could not get index for gene " + g.getValue());
+                    missedIndex++;
+                    System.err.printf("[ERROR] Could not get index for gene %s (total missed %d; total found %d).\n" ,
+                            g.getValue(), missedIndex, gotIndex);
                     continue;
+                } else {
+                    gotIndex++;
                 }
-                termLinks[i][k] = idx;
+                termLinks[j][k] = idx;
                 k++;
             }
         }
-
     }
 
 

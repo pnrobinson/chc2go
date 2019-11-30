@@ -8,7 +8,7 @@ import java.util.Random;
  *
  * @author Sebastian Bauer
  */
-public abstract class Bayes2GOScore extends Bayes2GOScoreBase
+public abstract class MgsaScore extends MgsaScoreBase
 {
     /** Source of randomness */
     protected Random rnd;
@@ -54,7 +54,7 @@ public abstract class Bayes2GOScore extends Bayes2GOScoreBase
         boolean smallerIsBetter();
     }
 
-    public Bayes2GOScore(Random rnd, int [][] termLinks, int numGenes, IGeneValueProvider geneValueProvider)
+    public MgsaScore(Random rnd, int [][] termLinks, int numGenes, IGeneValueProvider geneValueProvider)
     {
         super(termLinks, numGenes);
 
@@ -83,7 +83,7 @@ public abstract class Bayes2GOScore extends Bayes2GOScoreBase
      * @param termLinks terms to genes.
      * @param observedGenes state of each gene whether it is observed or not.
      */
-    public Bayes2GOScore(Random rnd, int [][] termLinks, final boolean [] observedGenes)
+    public MgsaScore(Random rnd, int [][] termLinks, final boolean [] observedGenes)
     {
         /* Here a gene value provider is constructed that maps the boolean observed state back
          * to values some values. A gene, that is observed gets a -1, a gene that is not observed

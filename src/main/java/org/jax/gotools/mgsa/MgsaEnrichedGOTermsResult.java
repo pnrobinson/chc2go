@@ -17,9 +17,9 @@ import java.util.Map;
  *
  * @author Sebastian Bauer
  */
-public class Bayes2GOEnrichedGOTermsResult
+public class MgsaEnrichedGOTermsResult
 {
-    private Bayes2GOScore score;
+    private MgsaScore score;
 
     /** A linear list containing properties for go terms */
     protected List<AbstractGOTermProperties> list = new ArrayList<>();
@@ -53,9 +53,9 @@ public class Bayes2GOEnrichedGOTermsResult
     /* FIXME: Remove this */
    // private IntMapper<TermId> termMapper;
 
-    public Bayes2GOEnrichedGOTermsResult(Ontology go,
-                                         AssociationContainer associations, StudySet studySet,
-                                         int populationGeneCount)
+    public MgsaEnrichedGOTermsResult(Ontology go,
+                                     AssociationContainer associations, StudySet studySet,
+                                     int populationGeneCount)
     {
         this.go = go;
         this.associations = associations;
@@ -63,12 +63,12 @@ public class Bayes2GOEnrichedGOTermsResult
         this.populationGeneCount = populationGeneCount;
     }
 
-    public void setScore(Bayes2GOScore score)
+    public void setScore(MgsaScore score)
     {
         this.score = score;
     }
 
-    public Bayes2GOScore getScore()
+    public MgsaScore getScore()
     {
         return score;
     }

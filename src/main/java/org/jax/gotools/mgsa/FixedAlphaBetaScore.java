@@ -7,7 +7,7 @@ import java.util.Random;
  *
  * @author Sebastian Bauer
  */
-public class FixedAlphaBetaScore extends Bayes2GOScore
+public class FixedAlphaBetaScore extends MgsaScore
 {
     private boolean integrateParams = false;
 

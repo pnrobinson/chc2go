@@ -1,7 +1,7 @@
 package org.jax.gotools.mgsa;
 
 
-class DoubleParam extends B2GParam
+class DoubleParam extends MgsaParam
 {
     private double min = Double.NaN;
     private double max = Double.NaN;

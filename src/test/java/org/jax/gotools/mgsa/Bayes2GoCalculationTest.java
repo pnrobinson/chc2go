@@ -2,6 +2,8 @@ package org.jax.gotools.mgsa;
 
 import org.junit.jupiter.api.Test;
 import org.monarchinitiative.phenol.analysis.AssociationContainer;
+import org.monarchinitiative.phenol.analysis.DirectAndIndirectTermAnnotations;
+import org.monarchinitiative.phenol.analysis.PopulationSet;
 import org.monarchinitiative.phenol.analysis.StudySet;
 import org.monarchinitiative.phenol.base.PhenolException;
 import org.monarchinitiative.phenol.io.OntologyLoader;
@@ -11,11 +13,9 @@ import org.monarchinitiative.phenol.ontology.data.TermAnnotation;
 import org.monarchinitiative.phenol.ontology.data.TermId;
 
 import java.io.File;
-import java.util.HashSet;
-import java.util.List;
-import java.util.Random;
-import java.util.Set;
+import java.util.*;
 
+import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
 public class Bayes2GoCalculationTest {
@@ -33,22 +33,27 @@ public class Bayes2GoCalculationTest {
                 fakeStudyGenes.add(tid);
             }
         }
-        return new StudySet(fakeStudyGenes, "fake", associationContainer, ontology);
+        Map<TermId, DirectAndIndirectTermAnnotations> assocs = associationContainer.getAssociationMap(fakeStudyGenes, ontology);
+        return new StudySet(fakeStudyGenes, "fake", assocs, ontology);
     }
 
     @Test
     void testMgsa() throws PhenolException {
         String localPathToGoObo = "/home/robinp/data/go/go.obo";
+        localPathToGoObo = "/Users/peterrobinson/Documents/data/go/go.obo";
         Ontology ontology = OntologyLoader.loadOntology(new File(localPathToGoObo));
         System.out.printf("[INFO] loaded ontology with %d terms.\n", ontology.countNonObsoleteTerms());
         String localPathToGoGaf = "/home/robinp/data/go/goa_human.gaf";
+        localPathToGoGaf = "/Users/peterrobinson/Documents/data/go/goa_human.gaf";
         final GoGeneAnnotationParser annotparser = new GoGeneAnnotationParser(localPathToGoGaf);
         List<TermAnnotation> goAnnots = annotparser.getTermAnnotations();
         System.out.println("[INFO] parsed " + goAnnots.size() + " GO annotations.");
         AssociationContainer associationContainer = new AssociationContainer(goAnnots);
 
-        Bayes2GOCalculation b2gCalc = new Bayes2GOCalculation();
-        StudySet populationSet = new StudySet(associationContainer.getAllAnnotatedGenes(),"population", associationContainer, ontology);
+        MgsaCalculation b2gCalc = new MgsaCalculation();
+        Set<TermId> allAnnotatedGenes = associationContainer.getAllAnnotatedGenes();
+        Map<TermId, DirectAndIndirectTermAnnotations> assocs = associationContainer.getAssociationMap(allAnnotatedGenes, ontology);
+        StudySet populationSet = new PopulationSet(associationContainer.getAllAnnotatedGenes(),assocs, ontology);
         StudySet study = getFakeStudySet(associationContainer,ontology);
         b2gCalc.calculateStudySet(ontology, associationContainer, populationSet, study);
         assertTrue(true);

@@ -256,7 +256,8 @@ public class PairWiseGoSimilarity {
                 studyGenes.add(tidB);
             }
         }
-        return new StudySet(studyGenes,"study set", this.associationContainer, this.geneOntology);
+        Map<TermId, DirectAndIndirectTermAnnotations> studyAssocs = this.associationContainer.getAssociationMap(studyGenes,geneOntology);
+        return new StudySet(studyGenes,"study set", studyAssocs, this.geneOntology);
     }
 
 
@@ -271,7 +272,8 @@ public class PairWiseGoSimilarity {
         System.out.printf("[INFO] Of these, %d terms were annotated.\n",n_annoted_terms);
         System.out.printf("[INFO] Nukber of GO annotations: %d.\n", this.goAnnots.size());
         Set<TermId> populationGenes = getPopulationSet(this.goAnnots);
-        StudySet populationSet = new StudySet(populationGenes,"population",associationContainer,this.geneOntology);
+        Map<TermId, DirectAndIndirectTermAnnotations> popAssocs = this.associationContainer.getAssociationMap(populationGenes, geneOntology);
+        StudySet populationSet = new PopulationSet(populationGenes, popAssocs, this.geneOntology);
         StudySet studySet = getStudySet();
         Hypergeometric hgeo = new Hypergeometric();
         MultipleTestingCorrection<Item2PValue> bonf = new Bonferroni<>();
