@@ -46,6 +46,7 @@ public class MgsaCalculation {
     private AssociationContainer goAssociations;
 
 
+
     public MgsaCalculation() {
     }
 
@@ -213,7 +214,7 @@ public class MgsaCalculation {
 
         long start = System.currentTimeMillis();
         try {
-            calculateByMCMC(graph, result, populationSet, studySet);//, llr);
+            calculateByMCMC(result, populationSet, studySet);//, llr);
         } catch (PhenolException e) {
             e.printStackTrace();
             System.exit(1); // TODO make more robust
@@ -228,8 +229,7 @@ public class MgsaCalculation {
         this.usePrior = usePrior;
     }
 
-    private void calculateByMCMC(Ontology graph,
-                                 MgsaEnrichedGOTermsResult result,
+    private void calculateByMCMC(MgsaEnrichedGOTermsResult result,
                                  StudySet populationSet,
                                  StudySet studySet) throws PhenolException {
         List<TermId> relevantTermList = new ArrayList<>(populationSet.getAnnotatingTermIds());// graph.filterRelevant(populationEnumerator.getAllAnnotatedTermsAsList());
@@ -442,7 +442,7 @@ public class MgsaCalculation {
 
             if (fixedAlphaBetaScore != null) {
                 if (doAlphaEm) {
-                    double newAlpha = (double) fixedAlphaBetaScore.getAvgN10() / (fixedAlphaBetaScore.getAvgN00() + fixedAlphaBetaScore.getAvgN10());
+                    double newAlpha =  fixedAlphaBetaScore.getAvgN10() / (fixedAlphaBetaScore.getAvgN00() + fixedAlphaBetaScore.getAvgN10());
                     if (newAlpha < 0.0000001) newAlpha = 0.0000001;
                     if (newAlpha > 0.9999999) newAlpha = 0.9999999;
                     logger.log(INFO, "alpha=" + alpha + "  newAlpha=" + newAlpha);
@@ -450,7 +450,7 @@ public class MgsaCalculation {
                 }
 
                 if (doBetaEm) {
-                    double newBeta = (double) fixedAlphaBetaScore.getAvgN01() / (fixedAlphaBetaScore.getAvgN01() + fixedAlphaBetaScore.getAvgN11());
+                    double newBeta =  fixedAlphaBetaScore.getAvgN01() / (fixedAlphaBetaScore.getAvgN01() + fixedAlphaBetaScore.getAvgN11());
                     if (newBeta < 0.0000001) newBeta = 0.0000001;
                     if (newBeta > 0.9999999) newBeta = 0.9999999;
                     logger.log(INFO, "beta=" + beta + "  newBeta=" + newBeta);
@@ -458,7 +458,7 @@ public class MgsaCalculation {
                 }
 
                 if (doPEm) {
-                    double newExpectedNumberOfTerms = (double) fixedAlphaBetaScore.getAvgT();
+                    double newExpectedNumberOfTerms = fixedAlphaBetaScore.getAvgT();
                     if (newExpectedNumberOfTerms < 0.0000001) newExpectedNumberOfTerms = 0.0000001;
                     logger.log(INFO, "expectedNumberOfTerms=" + expectedNumberOfTerms + "  newExpectedNumberOfTerms=" + newExpectedNumberOfTerms);
                     expectedNumberOfTerms = newExpectedNumberOfTerms;
