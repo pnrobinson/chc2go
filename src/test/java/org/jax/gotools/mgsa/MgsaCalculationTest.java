@@ -18,7 +18,7 @@ import java.util.*;
 import static org.junit.jupiter.api.Assertions.assertTimeoutPreemptively;
 import static org.junit.jupiter.api.Assertions.assertTrue;
 
-public class Bayes2GoCalculationTest {
+public class MgsaCalculationTest {
 
 
 
@@ -50,12 +50,14 @@ public class Bayes2GoCalculationTest {
         System.out.println("[INFO] parsed " + goAnnots.size() + " GO annotations.");
         AssociationContainer associationContainer = new AssociationContainer(goAnnots);
 
-        MgsaCalculation b2gCalc = new MgsaCalculation();
-        Set<TermId> allAnnotatedGenes = associationContainer.getAllAnnotatedGenes();
-        Map<TermId, DirectAndIndirectTermAnnotations> assocs = associationContainer.getAssociationMap(allAnnotatedGenes, ontology);
-        StudySet populationSet = new PopulationSet(associationContainer.getAllAnnotatedGenes(),assocs, ontology);
-        StudySet study = getFakeStudySet(associationContainer,ontology);
-        b2gCalc.calculateStudySet(ontology, associationContainer, populationSet, study);
+        int mcmcSteps = 50000;
+        MgsaCalculation mgsa = new MgsaCalculation(ontology, associationContainer, mcmcSteps);
+
+       // MgsaCalculation b2gCalc = new MgsaCalculation();
+
+          StudySet study = getFakeStudySet(associationContainer,ontology);
+          mgsa.calculateStudySet(study);
+        //b2gCalc.calculateStudySet(ontology, associationContainer, populationSet, study);
         assertTrue(true);
     }
 }

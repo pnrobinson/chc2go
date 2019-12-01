@@ -1,6 +1,8 @@
 package org.jax.gotools.mgsa;
 
 import org.monarchinitiative.phenol.analysis.AssociationContainer;
+import org.monarchinitiative.phenol.analysis.DirectAndIndirectTermAnnotations;
+import org.monarchinitiative.phenol.analysis.PopulationSet;
 import org.monarchinitiative.phenol.analysis.StudySet;
 import org.monarchinitiative.phenol.base.PhenolException;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
@@ -9,9 +11,7 @@ import org.monarchinitiative.phenol.ontology.data.TermId;
 
 import static java.util.logging.Level.INFO;
 
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Random;
+import java.util.*;
 import java.util.logging.Logger;
 
 
@@ -19,7 +19,7 @@ import java.util.logging.Logger;
  * This class implements a model-based analysis. The description of the entire
  * method can be found in "GOing Bayesian: model-based gene set analysis of genome-scale data"
  *
- * @author Sebastian Bauer
+ * @author Sebastian Bauer, modifications by Peter Robinson
  * @see <A HREF="http://nar.oxfordjournals.org/content/early/2010/02/19/nar.gkq045.short">GOing Bayesian: model-based gene set analysis of genome-scale data</A>
  */
 public class MgsaCalculation {
@@ -39,26 +39,50 @@ public class MgsaCalculation {
     //private ICalculationProgress calculationProgress;
 
     private boolean randomStart = false;
-
-    private int mcmcSteps = 500000;
+    private final static int DEFAULT_MCMCSTEPS = 250_000;
+    private final int mcmcSteps;
+    private final int burnin = 20000;
     private int updateReportTime = 1000; /* Update report time in ms */
 
     private AssociationContainer goAssociations;
 
+    private TermToItemMatrix termToItemMatrix;
+    /**
+     * Reference to ontology (usually Gene Ontology).
+     */
+    private Ontology ontology;
+
+    private final StudySet populationSet;
 
 
-    public MgsaCalculation() {
+    /**
+     * If this constructor is used, then all annotated genes are taken to be the population set.
+     *
+     * @param ontology       reference to Gene Ontology
+     * @param goAssociations reference to contained with GO <-> gene associations
+     * @param mcmcSteps      Number of iterations of MCMC to perform
+     */
+    public MgsaCalculation(Ontology ontology,
+                           AssociationContainer goAssociations,
+                           int mcmcSteps) {
+        this.ontology = ontology;
+        this.mcmcSteps = mcmcSteps;
+        Objects.requireNonNull(goAssociations);
+        try {
+            this.termToItemMatrix = new TermToItemMatrix(goAssociations);
+        } catch (PhenolException e) {
+            throw new RuntimeException(e.getMessage());
+        }
+        Set<TermId> allAnnotatedGenes = goAssociations.getAllAnnotatedGenes();
+        Map<TermId, DirectAndIndirectTermAnnotations> assocs = goAssociations.getAssociationMap(allAnnotatedGenes, ontology);
+        this.populationSet = new PopulationSet(goAssociations.getAllAnnotatedGenes(), assocs, ontology);
     }
 
-    public MgsaCalculation(MgsaCalculation calc) {
-        this.usePrior = calc.usePrior;
-        this.expectedNumberOfTerms = new IntegerParam(calc.expectedNumberOfTerms);
-        this.alpha = new DoubleParam(calc.alpha);
-        this.beta = new DoubleParam(calc.beta);
-        this.seed = calc.seed;
-        //this.calculationProgress = calc.calculationProgress;
-        this.takePopulationAsReference = calc.takePopulationAsReference;
-        this.mcmcSteps = calc.mcmcSteps;
+    /**
+     * @return the total count of genes (items) in the population set.
+     */
+    public int getPopulationSetCount() {
+        return populationSet.getAnnotatedItemCount();
     }
 
     /**
@@ -166,15 +190,6 @@ public class MgsaCalculation {
     }
 
     /**
-     * Sets the number of mcmc steps that are performed in the following runs.
-     *
-     * @param mcmcSteps
-     */
-    public void setMcmcSteps(int mcmcSteps) {
-        this.mcmcSteps = mcmcSteps;
-    }
-
-    /**
      * Sets whether a random start should be used.
      *
      * @param randomStart
@@ -192,16 +207,15 @@ public class MgsaCalculation {
         this.updateReportTime = updateReportTime;
     }
 
-    public MgsaEnrichedGOTermsResult calculateStudySet(Ontology graph,
-                                                       AssociationContainer goAssociations,
-                                                       StudySet populationSet,
-                                                       StudySet studySet) {
-        this.goAssociations = goAssociations;
-        if (studySet.getAnnotatedItemCount() == 0)
-            return new MgsaEnrichedGOTermsResult(graph, goAssociations, studySet, populationSet.getAnnotatedItemCount());
-
-        MgsaEnrichedGOTermsResult result = new MgsaEnrichedGOTermsResult(graph, goAssociations, studySet, populationSet.getAnnotatedItemCount());
-        // result.setCalculationName(this.getName());
+    public MgsaEnrichedGOTermsResult calculateStudySet(StudySet studySet) {
+        MgsaEnrichedGOTermsResult result = new MgsaEnrichedGOTermsResult(ontology,
+                goAssociations,
+                studySet,
+                getPopulationSetCount());
+        if (studySet.getAnnotatedItemCount() == 0) {
+            System.err.println("[WARNING] Study set empty! Returning specious result");
+            return result;
+        }
 
         //  TermEnumerator populationEnumerator = populationSet.enumerateTerms(graph, goAssociations);
         // TermEnumerator studyEnumerator = studySet.enumerateTerms(graph, goAssociations);
@@ -209,12 +223,12 @@ public class MgsaCalculation {
         logger.log(INFO, "Starting calculation: expectedNumberOfTerms=" + expectedNumberOfTerms +
                 " alpha=" + alpha +
                 " beta=" + beta +
-                " numberOfPop=" + populationSet.getAnnotatedItemCount() +
+                " numberOfPop=" + getPopulationSetCount() +
                 " numberOfStudy=" + studySet.getAnnotatedItemCount());
 
         long start = System.currentTimeMillis();
         try {
-            calculateByMCMC(result, populationSet, studySet);//, llr);
+            calculateByMCMC(result, studySet);//, llr);
         } catch (PhenolException e) {
             e.printStackTrace();
             System.exit(1); // TODO make more robust
@@ -230,7 +244,6 @@ public class MgsaCalculation {
     }
 
     private void calculateByMCMC(MgsaEnrichedGOTermsResult result,
-                                 StudySet populationSet,
                                  StudySet studySet) throws PhenolException {
         List<TermId> relevantTermList = new ArrayList<>(populationSet.getAnnotatingTermIds());// graph.filterRelevant(populationEnumerator.getAllAnnotatedTermsAsList());
         //IntMapper<TermId> termMapper = IntMapper.create(relevantTermList);
@@ -267,6 +280,176 @@ public class MgsaCalculation {
 
     public boolean supportsTestCorrection() {
         return false;
+    }
+
+
+    private MgsaGOTermProperties[] calculate2(StudySet studySet) {
+        int[][] term2Items = termToItemMatrix.getTermLinks();
+        boolean[] observedItems = this.termToItemMatrix.getBooleanArrayobservedItems(studySet.getAnnotatedItemTermIds()); //geneMapper.getDense(studyEnumerator.getGenes());
+        int numTerms = termToItemMatrix.getNumTerms();
+        MgsaGOTermProperties res[] = new MgsaGOTermProperties[numTerms];
+        Random rnd;
+        if (seed != 0) {
+            rnd = new Random(seed);
+            logger.log(INFO, "Using random seed of: " + seed);
+        } else {
+            long newSeed = new Random().nextLong();
+            logger.log(INFO, "Using random seed of: " + newSeed);
+            rnd = new Random(newSeed);
+        }
+        boolean doAlphaEm = false;
+        boolean doBetaEm = false;
+        boolean doPEm = false;
+
+        int maxIter;
+
+        double alpha;
+        double beta;
+        double expectedNumberOfTerms;
+        alpha = Double.NaN;
+        beta = Double.NaN;
+        expectedNumberOfTerms = Double.NaN;
+
+        FixedAlphaBetaScore fixedAlphaBetaScore = new FixedAlphaBetaScore(rnd, term2Items, observedItems);
+        fixedAlphaBetaScore.setIntegrateParams(integrateParams);
+        logger.log(INFO, "MCMC only: " + alpha + "  " + beta + "  " + expectedNumberOfTerms);
+        fixedAlphaBetaScore.setAlpha(alpha);
+        if (this.alpha.hasMax())
+            fixedAlphaBetaScore.setMaxAlpha(this.alpha.getMax());
+        fixedAlphaBetaScore.setBeta(beta);
+        if (this.beta.hasMax())
+            fixedAlphaBetaScore.setMaxBeta(this.beta.getMax());
+        fixedAlphaBetaScore.setExpectedNumberOfTerms(expectedNumberOfTerms);
+        fixedAlphaBetaScore.setUsePrior(usePrior);
+
+        logger.log(INFO, "Score of empty set: " + fixedAlphaBetaScore.getScore());
+
+        /* Provide a starting point */
+        if (randomStart) {
+            int numberOfTerms = fixedAlphaBetaScore.EXPECTED_NUMBER_OF_TERMS[rnd.nextInt(fixedAlphaBetaScore.EXPECTED_NUMBER_OF_TERMS.length)];
+            double pForStart = ((double) numberOfTerms) / term2Items.length;
+
+            for (int j = 0; j < term2Items.length; j++)
+                if (rnd.nextDouble() < pForStart) fixedAlphaBetaScore.switchState(j);
+
+            logger.log(INFO, "Starting with " + fixedAlphaBetaScore.getActiveTerms().length + " terms (p=" + pForStart + ")");
+        }
+
+        double score = fixedAlphaBetaScore.getScore();
+        logger.log(INFO, "Score of initial set: " + score);
+
+        int maxSteps = mcmcSteps;
+
+        int numAccepts = 0;
+        int numRejects = 0;
+
+
+        double maxScore = score;
+        int[] maxScoredTerms = fixedAlphaBetaScore.getActiveTerms();
+        double maxScoredAlpha = Double.NaN;
+        double maxScoredBeta = Double.NaN;
+        double maxScoredP = Double.NaN;
+        int maxWhenSeen = -1;
+
+        long start = System.currentTimeMillis();
+
+        for (int t = 0; t < maxSteps; t++) {
+            /* Remember maximum score and terms */
+            if (score > maxScore) {
+                maxScore = score;
+                maxScoredTerms = fixedAlphaBetaScore.getActiveTerms();
+                if (fixedAlphaBetaScore != null) {
+                    maxScoredAlpha = fixedAlphaBetaScore.getAlpha();
+                    maxScoredBeta = fixedAlphaBetaScore.getBeta();
+                    maxScoredP = fixedAlphaBetaScore.getP();
+                }
+                maxWhenSeen = t;
+            }
+
+            long now = System.currentTimeMillis();
+            if (now - start > updateReportTime) {
+                logger.log(INFO, (t * 100 / maxSteps) + "% (score=" + score + " maxScore=" + maxScore + " #terms=" + fixedAlphaBetaScore.getActiveTerms().length +
+                        " accept/reject=" + Double.toString((double) numAccepts / (double) numRejects) +
+                        " accept/steps=" + Double.toString((double) numAccepts / (double) t) +
+                        " exp=" + expectedNumberOfTerms + " usePrior=" + usePrior + ")");
+                start = now;
+
+            }
+
+            long oldPossibilities = fixedAlphaBetaScore.getNeighborhoodSize();
+            long r = rnd.nextLong();
+            fixedAlphaBetaScore.proposeNewState(r);
+            double newScore = fixedAlphaBetaScore.getScore();
+            long newPossibilities = fixedAlphaBetaScore.getNeighborhoodSize();
+
+            double acceptProb = Math.exp(newScore - score) * (double) oldPossibilities / (double) newPossibilities; /* last quotient is the hasting ratio */
+
+            double u = rnd.nextDouble();
+            if (u >= acceptProb) {
+                fixedAlphaBetaScore.undoProposal();
+                numRejects++;
+            } else {
+                score = newScore;
+                numAccepts++;
+            }
+            //System.err.println("t="+t);
+            if (t > burnin)
+                fixedAlphaBetaScore.record();
+
+        }
+
+
+        for (int t = 0; t < numTerms; t++) {
+            TermId tid = termToItemMatrix.getGoTermAtIndex(t);
+            MgsaGOTermProperties prop = new MgsaGOTermProperties();
+            prop.term = tid;
+            prop.annotatedStudyGenes = termToItemMatrix.getAnnotatedGeneCount(tid);
+            // studyEnumerator.getAnnotatedGenes(tid).totalAnnotatedCount();
+            prop.annotatedPopulationGenes = getPopulationSetCount();
+            //populationEnumerator.getAnnotatedGenes(tid).totalAnnotatedCount();
+            prop.marg = fixedAlphaBetaScore.termActivationCounts[t] / fixedAlphaBetaScore.numRecords;
+        }
+
+
+        if (fixedAlphaBetaScore != null) {
+            if (Double.isNaN(alpha)) {
+                for (int j = 0; j < fixedAlphaBetaScore.totalAlpha.length; j++)
+                    logger.log(INFO, "alpha(" + fixedAlphaBetaScore.ALPHA[j] + ")=" + (double) fixedAlphaBetaScore.totalAlpha[j] / fixedAlphaBetaScore.numRecords);
+            }
+
+            if (Double.isNaN(beta)) {
+                for (int j = 0; j < fixedAlphaBetaScore.totalBeta.length; j++)
+                    logger.log(INFO, "beta(" + fixedAlphaBetaScore.BETA[j] + ")=" + (double) fixedAlphaBetaScore.totalBeta[j] / fixedAlphaBetaScore.numRecords);
+            }
+
+            if (Double.isNaN(expectedNumberOfTerms)) {
+                for (int j = 0; j < fixedAlphaBetaScore.totalExp.length; j++)
+                    logger.log(INFO, "exp(" + fixedAlphaBetaScore.EXPECTED_NUMBER_OF_TERMS[j] + ")=" + (double) fixedAlphaBetaScore.totalExp[j] / fixedAlphaBetaScore.numRecords);
+
+            }
+        }
+
+        logger.log(INFO, "numAccepts=" + numAccepts + "  numRejects = " + numRejects);
+
+        if (logger.isLoggable(INFO)) {
+            StringBuilder b = new StringBuilder();
+
+            logger.log(INFO, "Term combination that reaches score of " + maxScore +
+                    " when alpha=" + maxScoredAlpha +
+                    ", beta=" + maxScoredBeta +
+                    ", p=" + maxScoredP +
+                    " at step " + maxWhenSeen);
+            b.append("Indices: ");
+            for (int t : maxScoredTerms) {
+                b.append(t);
+                b.append(", ");
+            }
+            logger.log(INFO, b.toString());
+        }
+
+        return res;
+
+
     }
 
     /**
@@ -442,7 +625,7 @@ public class MgsaCalculation {
 
             if (fixedAlphaBetaScore != null) {
                 if (doAlphaEm) {
-                    double newAlpha =  fixedAlphaBetaScore.getAvgN10() / (fixedAlphaBetaScore.getAvgN00() + fixedAlphaBetaScore.getAvgN10());
+                    double newAlpha = fixedAlphaBetaScore.getAvgN10() / (fixedAlphaBetaScore.getAvgN00() + fixedAlphaBetaScore.getAvgN10());
                     if (newAlpha < 0.0000001) newAlpha = 0.0000001;
                     if (newAlpha > 0.9999999) newAlpha = 0.9999999;
                     logger.log(INFO, "alpha=" + alpha + "  newAlpha=" + newAlpha);
@@ -450,7 +633,7 @@ public class MgsaCalculation {
                 }
 
                 if (doBetaEm) {
-                    double newBeta =  fixedAlphaBetaScore.getAvgN01() / (fixedAlphaBetaScore.getAvgN01() + fixedAlphaBetaScore.getAvgN11());
+                    double newBeta = fixedAlphaBetaScore.getAvgN01() / (fixedAlphaBetaScore.getAvgN01() + fixedAlphaBetaScore.getAvgN11());
                     if (newBeta < 0.0000001) newBeta = 0.0000001;
                     if (newBeta > 0.9999999) newBeta = 0.9999999;
                     logger.log(INFO, "beta=" + beta + "  newBeta=" + newBeta);

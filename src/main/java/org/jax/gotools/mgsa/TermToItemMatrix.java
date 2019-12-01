@@ -16,7 +16,7 @@ import java.util.*;
  * This replaces the original CalculationUtils.java and uses Java8 collections.
  */
 
-public class TermToItemMatrix {
+class TermToItemMatrix {
 
     private final int n_genes;
     private final int n_annotated_terms;
@@ -33,13 +33,14 @@ public class TermToItemMatrix {
 
 
     TermToItemMatrix(AssociationContainer assocs) throws PhenolException {
+        Objects.requireNonNull(assocs);
         Set<TermId> genes = assocs.getAllAnnotatedGenes();
         Set<TermId> goTerms = new HashSet<>();
         Multimap<TermId, TermId> goTermToAnnotatedGenesMap = ArrayListMultimap.create();
         ImmutableList.Builder<TermId> builder = new ImmutableList.Builder<>();
         ImmutableMap.Builder<TermId,Integer> mapBuilder = new ImmutableMap.Builder<>();
         n_genes = genes.size();
-        n_annotated_terms = assocs.getTotalNumberOfAnnotatedTerms();
+        n_annotated_terms = assocs.getOntologyTermCount();
         termLinks = new int[n_annotated_terms][];
         int i = 0;
         for (TermId tid : genes) {
@@ -92,6 +93,10 @@ public class TermToItemMatrix {
                 k++;
             }
         }
+    }
+
+    public int getNumTerms() {
+        return n_annotated_terms;
     }
 
 
