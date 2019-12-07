@@ -46,7 +46,7 @@ public class Downloader {
     public Downloader(String path, boolean overwrite){
         this.downloadDirectory=path;
         this.overwrite=overwrite;
-        logger.error("overwrite="+overwrite);
+        logger.trace("overwrite="+overwrite);
     }
 
     /**
@@ -88,6 +88,9 @@ public class Downloader {
     private void downloadFileIfNeeded(String filename, String webAddress) {
         File f = new File(String.format("%s%s%s",downloadDirectory,File.separator,filename));
         if (f.exists() && (! overwrite)) {
+            System.err.printf("Cowardly refusing to download %s since we found it at %s.\n",
+                    filename,
+                    f.getAbsolutePath());
             logger.trace(String.format("Cowardly refusing to download %s since we found it at %s",
                     filename,
                     f.getAbsolutePath()));

@@ -270,7 +270,7 @@ public class PairWiseGoSimilarity {
         System.out.printf("[INFO] parsed %d non-obsolete GO terms.\n",n_terms);
         int n_annoted_terms = this.associationContainer.getTotalNumberOfAnnotatedTerms();
         System.out.printf("[INFO] Of these, %d terms were annotated.\n",n_annoted_terms);
-        System.out.printf("[INFO] Nukber of GO annotations: %d.\n", this.goAnnots.size());
+        System.out.printf("[INFO] Number of GO annotations: %d.\n", this.goAnnots.size());
         Set<TermId> populationGenes = getPopulationSet(this.goAnnots);
         Map<TermId, DirectAndIndirectTermAnnotations> popAssocs = this.associationContainer.getAssociationMap(populationGenes, geneOntology);
         StudySet populationSet = new PopulationSet(populationGenes, popAssocs, this.geneOntology);
@@ -318,7 +318,7 @@ public class PairWiseGoSimilarity {
 
 
     private void prepareResnik() throws PhenolException {
-        // Compute list of annoations and mapping from OMIM ID to term IDs.
+        // Compute list of annotations and mapping from OMIM ID to term IDs.
         this.geneIdToTermIds = new HashMap<>();
         this.termIdToGeneIds = new HashMap<>();
 

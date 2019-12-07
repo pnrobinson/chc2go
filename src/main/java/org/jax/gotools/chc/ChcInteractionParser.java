@@ -15,8 +15,18 @@ public class ChcInteractionParser {
     private final File chcInteractionFile;
     private final List<ChcInteraction> interactionList;
 
+    private int n_interactions_with_no_genes = 0;
+    /** Some interactions are like this: Hic1,Mir212,Mir132;  i.e., only the first member of the pair has genes.
+     * We cannot use this for the functional analysis. This variable counts how many times this happens.
+     */
+    private int n_interactions_with_only_one_pair_with_genes = 0;
+
 
     public ChcInteractionParser(String path) {
+        if (path == null || path.isEmpty()) {
+            System.err.println("[ERROR] Need to pass valid pass to CHC interaction file (diachromatic).");
+            throw new RuntimeException("Need to pass valid pass to CHC interaction file (diachromatic).");
+        }
         this.chcInteractionFile = new File(path);
         interactionList = new ArrayList<>();
         try {
@@ -44,6 +54,13 @@ public class ChcInteractionParser {
             String[] genes = fields[3].split(";");
             String[] ratio = fields[4].split(":");
             String typus = fields[5];
+            if (genes.length == 0) {
+                n_interactions_with_no_genes++;
+                continue;
+            } else if (genes.length == 1) {
+                n_interactions_with_only_one_pair_with_genes++;
+                continue;
+            }
             try {
                 ChcInteraction chci = new ChcInteraction(pos, distance, category, genes, ratio, typus);
                 interactionList.add(chci);

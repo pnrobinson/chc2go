@@ -4,7 +4,7 @@
 
     <groupId>monarchinitiative</groupId>
     <artifactId>gotools</artifactId>
-    <version>0.0.4</version>
+    <version>0.0.5</version>
     <name>GOtools</name>
     <packaging>jar</packaging>
 

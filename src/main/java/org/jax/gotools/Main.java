@@ -16,15 +16,15 @@ public class Main {
 
     public static void main(String[] args) {
         Main main = new Main();
-        StatsCommand stats = new StatsCommand();
-        DownloadCommand download = new DownloadCommand();
-        OverrepresentationCommand overrep = new OverrepresentationCommand();
-        TfCommand tf = new TfCommand();
+        GoToolsCommand download = new DownloadCommand();
+        GoToolsCommand chc2go = new Chc2GoPairwiseCommand();
+        GoToolsCommand overrep = new Chc2GoOverrepCommand();
+        GoToolsCommand tf = new TfCommand();
 
         JCommander jc = JCommander.newBuilder()
                 .addObject(main)
                 .addCommand("download", download)
-                .addCommand("stats", stats)
+                .addCommand("chc2go", chc2go)
                 .addCommand("tf", tf)
                 .addCommand("overrep", overrep)
                 .build();
@@ -45,26 +45,26 @@ public class Main {
             System.err.println(jc.toString());
             System.exit(1);
         }
-        Chc2GoCommand chc2goCommand = null;
+        GoToolsCommand goToolsCommand = null;
         switch (command) {
             case "download":
-                chc2goCommand= download;
-                break;
-            case "stats":
-                chc2goCommand = stats;
+                goToolsCommand= download;
                 break;
             case "overrep":
-                chc2goCommand = overrep;
+                goToolsCommand = overrep;
                 break;
             case "tf":
-                chc2goCommand = tf;
+                goToolsCommand = tf;
+                break;
+            case "chc2go":
+                goToolsCommand = chc2go;
                 break;
             default:
                 System.err.println("[ERROR] Did not recognize command: "+ command);
                 jc.usage();
                 System.exit(0);
         }
-        chc2goCommand.run();
+        goToolsCommand.run();
 
     }
 

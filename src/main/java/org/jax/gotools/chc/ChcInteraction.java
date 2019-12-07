@@ -106,6 +106,7 @@ public class ChcInteraction {
         this.distance = distance;
         genelistA = new ArrayList<>();
         genelistB = new ArrayList<>();
+        // The parser enforces that genes is an array with length 2
         if (genes.length == 2) {
             switch (cat) {
                 case "U":
@@ -140,7 +141,7 @@ public class ChcInteraction {
             throw new RuntimeException("Malformed genes string with >2 fields");
         }
         if (ratio.length != 2) {
-            throw new RuntimeException("Malformed raio field n="+ratio.length);
+            throw new RuntimeException("Malformed ratio field n="+ratio.length);
         }
         this.simple = Integer.parseInt(ratio[0]);
         this.twisted = Integer.parseInt(ratio[1]);

@@ -1,8 +1,6 @@
 package org.jax.gotools.command;
 
 import org.jax.gotools.analysis.TranscriptionFactorCompare;
-import org.jax.gotools.string.StringInfoParser;
-import org.jax.gotools.string.StringParser;
 import org.jax.gotools.tf.TfParser;
 import org.jax.gotools.tf.TranscriptionFactor;
 import org.jax.gotools.tf.UniprotEntry;
@@ -10,10 +8,9 @@ import org.jax.gotools.tf.UniprotTextParser;
 import org.monarchinitiative.phenol.base.PhenolException;
 
 import java.io.File;
-import java.io.FileReader;
 import java.util.List;
 
-public class TfCommand extends Chc2GoCommand {
+public class TfCommand extends GoToolsCommand {
 
 
 

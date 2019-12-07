@@ -13,7 +13,7 @@ import org.slf4j.LoggerFactory;
  * @author <a href="mailto:peter.robinson@jax.org">Peter Robinson</a>
  */
 @Parameters(commandDescription = "Download files for LIRICAL")
-public class DownloadCommand extends Chc2GoCommand {
+public class DownloadCommand extends GoToolsCommand {
     private static final Logger logger = LoggerFactory.getLogger(DownloadCommand.class);
     @Parameter(names={"-w","--overwrite"}, description = "overwrite prevously downloaded files, if any")
     private boolean overwrite;

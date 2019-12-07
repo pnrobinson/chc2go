@@ -2,11 +2,12 @@ package org.jax.gotools.command;
 
 
 import com.beust.jcommander.Parameter;
+import com.fasterxml.jackson.annotation.JsonFormat;
 
-public abstract class Chc2GoCommand {
+import java.io.File;
 
-    @Parameter(names = {"-c", "--chc"}, description = "path to CHC interaction file")
-    protected String chcInteractionPath = null;
+public abstract class GoToolsCommand {
+
 
     @Parameter(names = {"-g", "--go"}, description = "path to go.obo file")
     protected String goOboPath = null;
@@ -18,5 +19,14 @@ public abstract class Chc2GoCommand {
     protected String dataDir = "data";
 
     public abstract void run();
+
+    protected void initGoPathsToDefault() {
+        if (goOboPath == null) {
+            goOboPath = String.format("%s%s%s", this.dataDir, File.separator, "go.obo");
+        }
+        if (goGafPath == null) {
+            goGafPath = String.format("%s%s%s", this.dataDir, File.separator, "goa_human.gaf");
+        }
+    }
 
 }
