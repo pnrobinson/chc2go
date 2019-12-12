@@ -18,6 +18,9 @@ public abstract class GoToolsCommand {
     @Parameter(names = {"-d", "--data"}, description = "path to data download file")
     protected String dataDir = "data";
 
+    @Parameter(names={"--outfile"}, description = "path to output file")
+    protected String outfile = "gotools_results.txt";
+
     public abstract void run();
 
     protected void initGoPathsToDefault() {

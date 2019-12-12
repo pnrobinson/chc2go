@@ -5,7 +5,10 @@ import org.jax.gotools.chc.ChcInteraction;
 import org.jax.gotools.chc.ChcInteractionParser;
 import org.jax.gotools.go.PairWiseGoSimilarity;
 
+import java.io.BufferedWriter;
 import java.io.File;
+import java.io.FileWriter;
+import java.io.IOException;
 import java.util.List;
 
 public class Chc2GoOverrepCommand extends GoToolsCommand {
@@ -32,7 +35,11 @@ public class Chc2GoOverrepCommand extends GoToolsCommand {
         List<ChcInteraction> chcInteractionList = parser.getInteractions();
         PairWiseGoSimilarity psim = new PairWiseGoSimilarity(chcInteractionList, goOboPath, goGafPath);
         psim.analyzePairwiseSimilarities();
-        psim.performOverrepresentationAnalysis();
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(this.outfile))) {
+            psim.performOverrepresentationAnalysis(writer);
+        }catch (IOException e) {
+            e.printStackTrace();
+        }
     }
 
 

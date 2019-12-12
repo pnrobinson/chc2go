@@ -16,6 +16,8 @@ import org.monarchinitiative.phenol.ontology.similarity.PairwiseResnikSimilarity
 import org.monarchinitiative.phenol.stats.*;
 
 import java.io.File;
+import java.io.IOException;
+import java.io.Writer;
 import java.util.*;
 
 import static org.jax.gotools.chc.ChcInteraction.InteractionType.UNDIRECTED_REF;
@@ -262,7 +264,7 @@ public class PairWiseGoSimilarity {
 
 
 
-    public void performOverrepresentationAnalysis() {
+    public void performOverrepresentationAnalysis(Writer writer) throws IOException {
         if (this.geneSymbol2TermId == null || this.geneSymbol2TermId.isEmpty()) {
             prepareGeneSymbolMapping();
         }
@@ -306,7 +308,7 @@ public class PairWiseGoSimilarity {
             n_sig++;
             double studypercentage = 100.0*(double)item.getAnnotatedStudyGenes()/studysize;
             double poppercentage = 100.0*(double)item.getAnnotatedPopulationGenes()/popsize;
-            System.out.println(String.format("%s [%s]: %.2e (adjusted %.2e). Study: n=%d (%.1f%%); population: N=%d (%.1f%%)",
+            writer.write(String.format("%s [%s]: %.2e (adjusted %.2e). Study: n=%d (%.1f%%); population: N=%d (%.1f%%).\n",
                 label, tid.getValue(), pval, pval_adj,item.getAnnotatedStudyGenes(), studypercentage,
                 item.getAnnotatedPopulationGenes(), poppercentage));
         }
