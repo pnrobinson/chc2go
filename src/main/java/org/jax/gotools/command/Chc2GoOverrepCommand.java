@@ -18,6 +18,14 @@ public class Chc2GoOverrepCommand extends GoToolsCommand {
             System.err.println("[ERROR] CHC Interaction file path is not initialized.\n");
             System.exit(1);
         }
+        if (this.goGafPath == null) {
+            System.err.println("[ERROR] Must pass path to goa_human.gaf file");
+            System.exit(1);
+        }
+        if (this.goOboPath == null) {
+            System.err.println("[ERROR] Must pass path to go.obo file");
+            System.exit(1);
+        }
         ChcInteractionParser parser = new ChcInteractionParser(this.chcInteractionPath);
         //if (true) { return; }
         setPaths();

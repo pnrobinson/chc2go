@@ -54,6 +54,8 @@ public class ChcInteraction {
     private final int simple;
     private final int twisted;
 
+    private final double logPval;
+
 
     public String getMaxGeneA() {
         return maxGeneA;
@@ -97,7 +99,7 @@ public class ChcInteraction {
         return genelistB;
     }
 
-    public ChcInteraction(String[] pos, int distance, String cat, String[] genes, String[] ratio, String typus) {
+    public ChcInteraction(String[] pos, int distance, String cat, String[] genes, String[] ratio, String typus, double logpval) {
         if (pos.length != 2) {
             throw new RuntimeException("Malformed position String with " + pos.length + "fields");
         }
@@ -145,6 +147,7 @@ public class ChcInteraction {
         }
         this.simple = Integer.parseInt(ratio[0]);
         this.twisted = Integer.parseInt(ratio[1]);
+        this.logPval = logpval;
     }
 
     public int getSimple() {
