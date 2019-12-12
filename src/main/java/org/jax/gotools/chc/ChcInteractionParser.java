@@ -45,9 +45,24 @@ public class ChcInteractionParser {
      * [1] 596504 distance
      * [2] U (NA, U, URII, URAI, URA, S or T)
      * [3] SNORD114-4,SNORD114-6,SNORD114-3,SNORD114-5;DIO3OS,DIO3,MIR1247 genes on the two digests
-     * [4]28:19 counts (twisted:simple)
-     * [5] IA
+     * [4] 28:19 counts (simple;twisted)
+     * [5] IA  -- inactive, active (target enrichment)
      * [6] 2.11 log10(P-Wert)
+     * [7] -1/-1 both digests had no TSS (-1: no TSS; -: one or more TSS on the minus strand; + one or more TSS on plus strand; d: mixed plus/minus TSS).
+     *
+     * NA -- interaction cannot be significant with p-value threshold (count of read pairs too small)
+     * These are the raw p-values. The p-value cutoff is made by the FDR estimation.
+     * This is in the file name JAV_ACD4_RALT_0.0019_interactions_with_genesymbols.tsv.gz
+     * Here, 0.0019 is the FDR cutoff.
+     * U undirected
+     * S/T directed simple, twisted
+     * URII undirected reference interaction between two digests that were not enriched
+     * URAI undirected reference interaction between two digests only one of which was enriched
+     * URA undirected reference interaction between two digests, both enriched
+     *
+     * Here, we will filter for directed interactions together with reference undirected interactions.
+     * This means, that field [2] must be one of S, T, and URA, and field [5] must be AA
+     *
      * @param line
      */
     private void processLine(String line) {
@@ -62,9 +77,15 @@ public class ChcInteractionParser {
         String[] pos = fields[0].split(";");
         int distance = Integer.parseInt(fields[1]);
         String category = fields[2];
+        if (! category.equals("S") && ! category.equals("T") && ! category.equals("URA")) {
+            return;
+        }
         String[] genes = fields[3].split(";");
         String[] ratio = fields[4].split(":");
         String typus = fields[5];
+        if (! typus.equals("AA")) {
+            return;
+        }
         double logPval = Double.parseDouble(fields[6]);
         if (genes.length == 0) {
             n_interactions_with_no_genes++;
