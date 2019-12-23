@@ -297,7 +297,7 @@ public class PairWiseGoSimilarity {
         int poptotal = populationSet.getAnnotatedItemCount();
         List<GoTermResult> results = new ArrayList<>();
         logger.trace(String.format("Study set: %d genes. Population set: %d genes", studytotal,poptotal));
-        writer.write(GoTermResult.header());
+        writer.write(GoTermResult.header() + "\n");
 
         for (GoTerm2PValAndCounts item : pvals) {
             double pval = item.getRawPValue();

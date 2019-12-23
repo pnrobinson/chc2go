@@ -28,31 +28,32 @@ public class ChcInteractionParserTest {
         assertNotNull(parser);
     }
 
+    /** One of the hundred lines was valid. */
     @Test
     void testThat100InteractionsAreParsed() {
         List<ChcInteraction> interactions = parser.getInteractions();
-        assertEquals(100,interactions.size());
+        assertEquals(1,interactions.size());
     }
 
     /**
-     * chr1:109040207-109050776;chr1:109546097-109552254	495321	NA	WDR47;GNAI3	1:4	AA
+     * chr17:72411026-72411616;chr17:72712662-72724357	301046	T	FAKE1;FAKE2	6:5	AA	0.69	-1/-1	;
      */
     @Test
     void testFirstInteraction() {
         List<ChcInteraction> interactions = parser.getInteractions();
         ChcInteraction interaction1 = interactions.get(0);
-        int expectedDistance = 495321;
+        int expectedDistance = 301046;
         assertEquals(expectedDistance, interaction1.getDistance());
-        ChcInteraction.InteractionType expectedInteractionType = ChcInteraction.InteractionType.INDEFINABLE;
+        ChcInteraction.InteractionType expectedInteractionType = ChcInteraction.InteractionType.TWISTED;
         assertEquals(expectedInteractionType, interaction1.getItype());
-        List<String> geneListA = new ArrayList<>(); geneListA.add("WDR47");
+        List<String> geneListA = new ArrayList<>(); geneListA.add("FAKE1");
         assertEquals(geneListA, interaction1.getGenelistA());
-        List<String> geneListB = new ArrayList<>();  geneListB.add("GNAI3");
+        List<String> geneListB = new ArrayList<>();  geneListB.add("FAKE2");
         assertEquals(geneListB, interaction1.getGenelistB());
-        assertEquals("chr1:109040207-109050776", interaction1.getPosA());
-        assertEquals("chr1:109546097-109552254", interaction1.getPosB());
-        assertEquals(1, interaction1.getSimple());
-        assertEquals(4, interaction1.getTwisted());
+        assertEquals("chr17:72411026-72411616", interaction1.getPosA());
+        assertEquals("chr17:72712662-72724357", interaction1.getPosB());
+        assertEquals(6, interaction1.getSimple());
+        assertEquals(5, interaction1.getTwisted());
     }
 
 

@@ -1,5 +1,6 @@
 package org.jax.gotools.mgsa;
 
+import org.junit.Ignore;
 import org.junit.jupiter.api.Test;
 import org.monarchinitiative.phenol.analysis.AssociationContainer;
 import org.monarchinitiative.phenol.analysis.DirectAndIndirectTermAnnotations;
@@ -37,7 +38,8 @@ public class MgsaCalculationTest {
         return new StudySet(fakeStudyGenes, "fake", assocs, ontology);
     }
 
-    @Test
+    /*
+    @Test @Ignore  // experimental still
     void testMgsa() throws PhenolException {
         String localPathToGoObo = "/home/robinp/data/go/go.obo";
         localPathToGoObo = "/Users/peterrobinson/Documents/data/go/go.obo";
@@ -60,4 +62,6 @@ public class MgsaCalculationTest {
         //b2gCalc.calculateStudySet(ontology, associationContainer, populationSet, study);
         assertTrue(true);
     }
+    */
+
 }
