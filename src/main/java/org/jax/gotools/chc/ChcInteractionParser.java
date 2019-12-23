@@ -40,7 +40,7 @@ public class ChcInteractionParser {
     }
 
     /**
-     * A typical line has 7 fields:
+     * A typical line has 8 fields:
      * [0] chr14:100952105-100959144;chr14:101555648-101573263 location of the two digests
      * [1] 596504 distance
      * [2] U (NA, U, URII, URAI, URA, S or T)
@@ -49,7 +49,7 @@ public class ChcInteractionParser {
      * [5] IA  -- inactive, active (target enrichment)
      * [6] 2.11 log10(P-Wert)
      * [7] -1/-1 both digests had no TSS (-1: no TSS; -: one or more TSS on the minus strand; + one or more TSS on plus strand; d: mixed plus/minus TSS).
-     *
+     * [8] chr1:46303698:+,chr1:46303366:-;
      * NA -- interaction cannot be significant with p-value threshold (count of read pairs too small)
      * These are the raw p-values. The p-value cutoff is made by the FDR estimation.
      * This is in the file name JAV_ACD4_RALT_0.0019_interactions_with_genesymbols.tsv.gz
@@ -70,9 +70,13 @@ public class ChcInteractionParser {
        // System.out.println(line);
        // System.out.println(fields.length);
 
-        if (fields.length != 7) {
+        if (fields.length != 9) {
             System.err.printf("[ERROR] Malformed line with %d fields: %s.\n", fields.length, line);
-            return;
+//            for (int i = 0; i < fields.length; i++) {
+//                System.out.printf("%d) %s\n", i, fields[i]);
+//            }
+//            System.exit(1);
+//            return;
         }
         String[] pos = fields[0].split(";");
         int distance = Integer.parseInt(fields[1]);

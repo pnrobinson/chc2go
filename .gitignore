@@ -22,3 +22,5 @@ target/
 data/
 target/generated-sources/
 target/generated-test-sources/
+.idea/
+gotools_results.txt

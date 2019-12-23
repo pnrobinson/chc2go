@@ -4,6 +4,7 @@ import com.google.common.collect.ImmutableSet;
 import com.google.common.collect.Sets;
 import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.math3.stat.inference.TestUtils;
+import org.jax.gotools.analysis.GoTermResult;
 import org.jax.gotools.chc.ChcInteraction;
 import org.monarchinitiative.phenol.base.PhenolException;
 import org.monarchinitiative.phenol.formats.go.GoGaf21Annotation;
@@ -14,6 +15,8 @@ import org.monarchinitiative.phenol.ontology.data.*;
 import org.monarchinitiative.phenol.analysis.*;
 import org.monarchinitiative.phenol.ontology.similarity.PairwiseResnikSimilarity;
 import org.monarchinitiative.phenol.stats.*;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 
 import java.io.File;
 import java.io.IOException;
@@ -26,6 +29,7 @@ import static org.jax.gotools.chc.ChcInteraction.InteractionType.UNDIRECTED_REF;
  * Class to calculate the pairwise similarity of genes/proteins according to the Gene Ontology terms that annotate them.
  */
 public class PairWiseGoSimilarity {
+    private static final Logger logger = LoggerFactory.getLogger(PairWiseGoSimilarity.class);
     /** Each entry corresponds to a Capture Hi C interaction. */
     private final List<ChcInteraction> chcInteractionList;
 
@@ -269,10 +273,10 @@ public class PairWiseGoSimilarity {
             prepareGeneSymbolMapping();
         }
         int n_terms = this.geneOntology.countNonObsoleteTerms();
-        System.out.printf("[INFO] parsed %d non-obsolete GO terms.\n",n_terms);
+        logger.trace("parsed {}} non-obsolete GO terms.",n_terms);
         int n_annoted_terms = this.associationContainer.getTotalNumberOfAnnotatedTerms();
-        System.out.printf("[INFO] Of these, %d terms were annotated.\n",n_annoted_terms);
-        System.out.printf("[INFO] Number of GO annotations: %d.\n", this.goAnnots.size());
+        logger.trace("Of these, {} terms were annotated.",n_annoted_terms);
+        logger.trace("Number of GO annotations: {}.", this.goAnnots.size());
         Set<TermId> populationGenes = getPopulationSet(this.goAnnots);
         Map<TermId, DirectAndIndirectTermAnnotations> popAssocs = this.associationContainer.getAssociationMap(populationGenes, geneOntology);
         StudySet populationSet = new PopulationSet(populationGenes, popAssocs, this.geneOntology);
@@ -285,13 +289,16 @@ public class PairWiseGoSimilarity {
             studySet,
             hgeo,
             bonf);
-        int popsize = populationSet.getAnnotatedItemCount();
-        int studysize = studySet.getAnnotatedItemCount();
         List<GoTerm2PValAndCounts> pvals = tftpvalcal.calculatePVals();
-        System.err.println("Total number of retrieved p values: " + pvals.size());
+        logger.trace("Total number of retrieved p values: {}", pvals.size());
         int n_sig = 0;
         double ALPHA = 0.05;
-        System.out.println(String.format("Study set: %d genes. Population set: %d genes", studysize,popsize));
+        int studytotal = studySet.getAnnotatedItemCount();
+        int poptotal = populationSet.getAnnotatedItemCount();
+        List<GoTermResult> results = new ArrayList<>();
+        logger.trace(String.format("Study set: %d genes. Population set: %d genes", studytotal,poptotal));
+        writer.write(GoTermResult.header());
+
         for (GoTerm2PValAndCounts item : pvals) {
             double pval = item.getRawPValue();
             double pval_adj = item.getAdjustedPValue();
@@ -306,15 +313,17 @@ public class PairWiseGoSimilarity {
                 continue;
             }
             n_sig++;
-            double studypercentage = 100.0*(double)item.getAnnotatedStudyGenes()/studysize;
-            double poppercentage = 100.0*(double)item.getAnnotatedPopulationGenes()/popsize;
-            writer.write(String.format("%s [%s]: %.2e (adjusted %.2e). Study: n=%d (%.1f%%); population: N=%d (%.1f%%).\n",
-                label, tid.getValue(), pval, pval_adj,item.getAnnotatedStudyGenes(), studypercentage,
-                item.getAnnotatedPopulationGenes(), poppercentage));
+            GoTermResult result = new GoTermResult(label, tid, pval, pval_adj, item.getAnnotatedStudyGenes(), studytotal, item.getAnnotatedPopulationGenes(), poptotal);
+            results.add(result);
+        }
+        Collections.sort(results);
+        for (GoTermResult result : results) {
+            writer.write(result.getRow() + "\n");
         }
         System.out.println(String.format("%d of %d terms were significant at alpha %.7f",
         n_sig,pvals.size(),ALPHA));
     }
+
 
 
 

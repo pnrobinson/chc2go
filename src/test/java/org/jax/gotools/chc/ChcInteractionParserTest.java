@@ -4,6 +4,7 @@ import org.junit.jupiter.api.BeforeAll;
 import org.junit.jupiter.api.Test;
 
 import java.io.File;
+import java.util.ArrayList;
 import java.util.List;
 
 import static org.junit.jupiter.api.Assertions.assertEquals;
@@ -44,9 +45,9 @@ public class ChcInteractionParserTest {
         assertEquals(expectedDistance, interaction1.getDistance());
         ChcInteraction.InteractionType expectedInteractionType = ChcInteraction.InteractionType.INDEFINABLE;
         assertEquals(expectedInteractionType, interaction1.getItype());
-        List<String> geneListA = List.of("WDR47");
+        List<String> geneListA = new ArrayList<>(); geneListA.add("WDR47");
         assertEquals(geneListA, interaction1.getGenelistA());
-        List<String> geneListB = List.of("GNAI3");
+        List<String> geneListB = new ArrayList<>();  geneListB.add("GNAI3");
         assertEquals(geneListB, interaction1.getGenelistB());
         assertEquals("chr1:109040207-109050776", interaction1.getPosA());
         assertEquals("chr1:109546097-109552254", interaction1.getPosB());

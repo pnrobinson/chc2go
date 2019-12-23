@@ -4,7 +4,7 @@
 
     <groupId>monarchinitiative</groupId>
     <artifactId>gotools</artifactId>
-    <version>0.0.5</version>
+    <version>0.1.0</version>
     <name>GOtools</name>
     <packaging>jar</packaging>
 
@@ -13,7 +13,7 @@
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
-        <java.version>11</java.version>
+        <java.version>8</java.version>
         <phenol.version>1.4.2-SNAPSHOT</phenol.version>
         <guava.version>27.0-jre</guava.version>
         <junit.version>5.1.0</junit.version>
@@ -204,7 +204,7 @@
     </dependencyManagement>
 
     <build>
-        <finalName>CHC2GO</finalName>
+        <finalName>GOtools</finalName>
         <!--  <sourceDirectory>src</sourceDirectory> -->
         <resources>
             <resource>
