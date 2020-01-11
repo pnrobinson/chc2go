@@ -39,6 +39,7 @@ public class ChcInteraction {
         SIMPLE,
         UNDIRECTED,
         UNDIRECTED_REF,
+        UNDIRECTED_REF_AA, /* undirected promoter promoter interactions */
         INDEFINABLE
     }
 
@@ -117,6 +118,10 @@ public class ChcInteraction {
                 case "UR":
                     itype = InteractionType.UNDIRECTED_REF;
                     break;
+                case "URAA":
+                    itype = InteractionType.UNDIRECTED_REF_AA;
+                    break;
+                    // we do not need URAI, URIA, URII */
                 case "T":
                     itype = InteractionType.TWISTED;
                     break;
