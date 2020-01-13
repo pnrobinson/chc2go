@@ -12,6 +12,15 @@ public class ChcInteractionParser {
     private static final Logger logger = LoggerFactory.getLogger(ChcInteractionParser.class);
     private final File chcInteractionFile;
     private final List<ChcInteraction> interactionList;
+    /** Count of AA interactions (active/active). */
+    private int countAA = 0;
+    /** Count of inactive/active (not-enriched, enriched) */
+    private int countIA = 0;
+    /** Count of inactive/inactive interactions. */
+    private int countII = 0;
+    /** Count of active/inactive interactions */
+    private int countAI = 0;
+
 
     private int n_interactions_with_no_genes = 0;
     /** Some interactions are like this: Hic1,Mir212,Mir132;  i.e., only the first member of the pair has genes.
@@ -37,6 +46,10 @@ public class ChcInteractionParser {
             e.printStackTrace();
             System.exit(1);
         }
+        System.out.printf("AA: %d, AI: %d, IA: %d, II: %d\n", countAA, countAI, countIA, countII);
+        logger.info("Interaction counts: AA: {}, AI: {}, IA: {}, II: {}\n", countAA, countAI, countIA, countII);
+        logger.info("Interaction counts (AA digest pairs with no genes): {}", n_interactions_with_no_genes);
+        logger.info("Interaction counts (AA digest pairs only one of which has genes): {}", n_interactions_with_only_one_pair_with_genes);
     }
 
     /**
@@ -67,16 +80,8 @@ public class ChcInteractionParser {
      */
     private void processLine(String line) {
         String[] fields = line.split("\t");
-       // System.out.println(line);
-       // System.out.println(fields.length);
-
         if (fields.length != 9) {
-            System.err.printf("[ERROR] Malformed line with %d fields: %s.\n", fields.length, line);
-//            for (int i = 0; i < fields.length; i++) {
-//                System.out.printf("%d) %s\n", i, fields[i]);
-//            }
-//            System.exit(1);
-//            return;
+            System.err.printf("[ERROR] Malformed line with %d fields (at least 9 required): %s.\n", fields.length, line);
         }
         String[] pos = fields[0].split(";");
         int distance = Integer.parseInt(fields[1]);
@@ -87,8 +92,22 @@ public class ChcInteractionParser {
         String[] genes = fields[3].split(";");
         String[] ratio = fields[4].split(":");
         String typus = fields[5];
-        if (! typus.equals("AA")) {
+        // filtering for AA (active/active) means that we keep interactions for which both partners were enriched.
+        // for most CHC experiments, this means we keep promoter-promoter interactions
+        if (typus.equals("IA")) {
+            countIA++;
             return;
+        } else if (typus.equals("AI") ) {
+            countAI++;
+            return;
+        } else if (typus.equals("II")) {
+            countII++;
+            return;
+        } else if (typus.equals("AA")) {
+            countAA++;
+        } else {
+            // should never happen
+            throw new RuntimeException("Bad interaction type: " + typus);
         }
         double logPval = Double.parseDouble(fields[6]);
         if (genes.length == 0) {
