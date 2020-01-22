@@ -7,6 +7,7 @@ import org.monarchinitiative.phenol.base.PhenolException;
 import org.monarchinitiative.phenol.base.PhenolRuntimeException;
 import org.monarchinitiative.phenol.io.OntologyLoader;
 import org.monarchinitiative.phenol.io.obo.go.GoGeneAnnotationParser;
+import org.monarchinitiative.phenol.ontology.algo.OntologyAlgorithm;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
 import org.monarchinitiative.phenol.ontology.data.TermAnnotation;
 import org.monarchinitiative.phenol.ontology.data.TermId;
@@ -67,10 +68,23 @@ public class GoTable {
         for (Protein p : this.proteins) {
             TermId uprotId = p.getUniprotTermID();
             List<Boolean> annotated = new ArrayList<>();
+            Set<TermId> inducedGraphOfAnnotatedTermSet = new HashSet<>();
             try {
                 ItemAssociations itmemassoc = this.associationContainer.get(uprotId);
+                for (TermId tid: itmemassoc.getAssociations()) {
+
+                    //tid is a direct (explicit) annotation.
+                    // first check whether it is in thhe ontology (versioning)
+                    if (! this.geneOntology.getTermMap().containsKey(tid)) {
+                        System.err.printf("[WARNING] Ontology does not contain term %s. Skipping...\n", tid.getValue());
+                        continue;
+                    }
+                    // the following gets all of the ancestors of tid. The set also includes tid itself
+                    Set<TermId> ancs = OntologyAlgorithm.getAncestorTerms(this.geneOntology, tid, true);
+                    inducedGraphOfAnnotatedTermSet.addAll(ancs);
+                }
                 for (TermId goId : this.targetGoTermSet) {
-                    if (itmemassoc.containsID(goId)) {
+                    if (inducedGraphOfAnnotatedTermSet.contains(goId)) {
                         annotated.add(Boolean.TRUE);
                     } else {
                         annotated.add(Boolean.FALSE);
@@ -175,11 +189,12 @@ public class GoTable {
             writer.write("\\documentclass{standalone} \n");
             writer.write("\\usepackage[table]{xcolor} \n");
             writer.write("\\usepackage{array,graphicx} \n");
+            writer.write("\\usepackage{pifont} \n");
             writer.write("\\newcommand*\\rot{\\rotatebox{90}}\n");
             writer.write("\\newcommand*\\OK{\\ding{51}}");
             writer.write("\\begin{document}");
 
-            String fields = "{lllp{4cm}";
+            String fields = "{lllp{5cm}|";
             int n = targetGoTermSet.size();
             for (int i = 0; i<n; i++) {
                 fields += "l";
@@ -187,6 +202,7 @@ public class GoTable {
             fields += "}";
             writer.write("\\begin{tabular}" + fields + "\n");
             writer.write(getHeader() + "\\\\ \n");
+            writer.write("\\hline \n");
             for (Protein p : this.proteins) {
                 List<String> arr = new ArrayList<>();
                 arr.add(p.geneSymbol);
@@ -195,7 +211,7 @@ public class GoTable {
                 arr.add(p.name);
                 for (Boolean b : p.annotated) {
                     if (b) {
-                        arr.add("\\cellcolor{black!75}x");
+                        arr.add("\\cellcolor{gray!25} \\OK");
                     } else {
                         arr.add(" ");
                     }
@@ -203,6 +219,7 @@ public class GoTable {
                 String row = String.join("&", arr);
                 writer.write(row + "\\\\ \n");
             }
+            writer.write("\\hline \n");
             writer.write("\\end{tabular}\n");
             writer.write("\\end{document}\n\n");
         } catch (IOException e) {
