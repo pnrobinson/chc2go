@@ -194,7 +194,7 @@ public class GoTable {
             writer.write("\\newcommand*\\OK{\\ding{51}}");
             writer.write("\\begin{document}");
 
-            String fields = "{lllp{5cm}|";
+            String fields = "{lllp{8cm}|";
             int n = targetGoTermSet.size();
             for (int i = 0; i<n; i++) {
                 fields += "l";
