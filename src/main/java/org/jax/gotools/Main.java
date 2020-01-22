@@ -20,6 +20,7 @@ public class Main {
         GoToolsCommand chc2go = new Chc2GoPairwiseCommand();
         GoToolsCommand overrep = new Chc2GoOverrepCommand();
         GoToolsCommand tf = new TfCommand();
+        GoTableCommand table = new GoTableCommand();
 
         JCommander jc = JCommander.newBuilder()
                 .addObject(main)
@@ -27,6 +28,7 @@ public class Main {
                 .addCommand("chc2go", chc2go)
                 .addCommand("tf", tf)
                 .addCommand("overrep", overrep)
+                .addCommand("table", table)
                 .build();
 
         try {
@@ -58,6 +60,9 @@ public class Main {
                 break;
             case "chc2go":
                 goToolsCommand = chc2go;
+                break;
+            case "table":
+                goToolsCommand = table;
                 break;
             default:
                 System.err.println("[ERROR] Did not recognize command: "+ command);
