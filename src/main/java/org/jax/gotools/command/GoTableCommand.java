@@ -4,9 +4,7 @@ import com.beust.jcommander.Parameter;
 import org.jax.gotools.analysis.GoTable;
 import org.monarchinitiative.phenol.ontology.data.TermId;
 
-import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import java.util.List;
 import java.util.Map;
 
 public class GoTableCommand extends GoToolsCommand {

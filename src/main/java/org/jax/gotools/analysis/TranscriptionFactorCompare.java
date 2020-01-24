@@ -8,13 +8,10 @@ import org.jax.gotools.string.PPI;
 import org.jax.gotools.string.StringParser;
 import org.jax.gotools.tf.TranscriptionFactor;
 import org.jax.gotools.tf.UniprotEntry;
-import org.monarchinitiative.phenol.analysis.AssociationContainer;
 import org.monarchinitiative.phenol.base.PhenolException;
 import org.monarchinitiative.phenol.io.OntologyLoader;
-import org.monarchinitiative.phenol.io.obo.go.GoGeneAnnotationParser;
 import org.monarchinitiative.phenol.ontology.algo.OntologyAlgorithm;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
-import org.monarchinitiative.phenol.ontology.data.TermAnnotation;
 import org.monarchinitiative.phenol.ontology.data.TermId;
 
 import java.io.BufferedReader;

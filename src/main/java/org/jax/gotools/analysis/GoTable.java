@@ -294,7 +294,7 @@ public class GoTable {
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(path))) {
             // header
             String categories = String.join("\t", goId2Labels.values());
-            writer.write("Gene\tuprot.id\tgene.id\tsplicing\tregulation\t" + categories + "\n");
+            writer.write("Gene\tuprot.id\tgene.id\t" + categories + "\n");
             for (Protein p : this.proteins) {
                 // output to tsv file
                 List<String> annotated = new ArrayList<>();
