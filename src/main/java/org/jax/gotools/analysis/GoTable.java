@@ -1,41 +1,40 @@
 package org.jax.gotools.analysis;
 
-import com.google.common.collect.ImmutableSet;
+
 import org.apache.commons.lang.builder.HashCodeBuilder;
-import org.monarchinitiative.phenol.analysis.AssociationContainer;
-import org.monarchinitiative.phenol.analysis.ItemAssociations;
-import org.monarchinitiative.phenol.base.PhenolException;
-import org.monarchinitiative.phenol.base.PhenolRuntimeException;
 import org.monarchinitiative.phenol.io.OntologyLoader;
-import org.monarchinitiative.phenol.io.obo.go.GoGeneAnnotationParser;
 import org.monarchinitiative.phenol.ontology.algo.OntologyAlgorithm;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
-import org.monarchinitiative.phenol.ontology.data.TermAnnotation;
 import org.monarchinitiative.phenol.ontology.data.TermId;
+
 
 import java.io.*;
 import java.util.*;
+import java.util.zip.GZIPInputStream;
 
 public class GoTable {
 
     private final Ontology geneOntology;
-    /** Use by the GO framework to store annotations. */
+    /**
+     * Use by the GO framework to store annotations.
+     */
     private List<Protein> proteins;
 
     private Map<TermId, String> goTermMap;
 
-    private Map<String,Protein> uprotMap;
+    private Map<String, Protein> uprotMap;
+    /** Key, a symbol suh as FBN1. Value. The corresponding NCBI Entrez Gene id, e.g. 2200. */
+    private Map<String, Integer> symbolToEntrezGeneIdMap;
 
 
-
-    public GoTable(String goObo, String goGaf, Map<TermId, String> goTermMap) {
+    public GoTable(String goObo, String goGaf, String geneInfoPath, Map<TermId, String> goTermMap) {
         File goOboFile = new File(goObo);
         // GoGaf file.
         File goGafFile = new File(goGaf);
-        if (! goOboFile.exists()) {
+        if (!goOboFile.exists()) {
             throw new RuntimeException("Could not find go.obo file");
         }
-        if (! goGafFile.exists()) {
+        if (!goGafFile.exists()) {
             throw new RuntimeException("Could not find go.gaf file");
         }
         System.out.println("[INFO] Parsing GO data.....");
@@ -45,10 +44,10 @@ public class GoTable {
         System.out.println("[INFO] parsing  " + goGafFile.getAbsolutePath());
         this.goTermMap = goTermMap;
         this.uprotMap = new HashMap<>();
+        parseGeneInfo(geneInfoPath);
         findAnnotatedProteins(goGaf);
         makeSortedListOfProteins();
     }
-
 
 
     private void findAnnotatedProteins(String goGaf) {
@@ -64,20 +63,23 @@ public class GoTable {
                 TermId goTerm = TermId.of(F[4]);
                 String label = F[9]; // e.g., Charged multivesicular body protein 2a
                 String category = F[11]; // e.g. protein
-                if (! category.equals("protein"))
+                if (!category.equals("protein"))
                     continue;
                 Set<TermId> ancs = OntologyAlgorithm.getAncestorTerms(this.geneOntology, goTerm, true);
                 for (TermId targetID : this.goTermMap.keySet()) {
                     if (ancs.contains(targetID)) {
                         // we have a match!
-                        int fakeGeneId = 42;
-                        this.uprotMap.putIfAbsent(uprotID, new Protein(symbol,fakeGeneId,uprotID, label));
+                        int geneId = this.symbolToEntrezGeneIdMap.getOrDefault(symbol,-1);
+                        if (geneId < 0) {
+                            System.err.println("[WARNING] Could not retrieve id for gene " + symbol);
+                            continue; // Skip genes without geneIDs
+                        }
+                        this.uprotMap.putIfAbsent(uprotID, new Protein(symbol, geneId, uprotID, label));
                         Protein p = this.uprotMap.get(uprotID);
                         p.addAnnotation(targetID);
                     }
                 }
             }
-
         } catch (IOException e) {
             e.printStackTrace();
             System.err.println("Could not read go gaf file");
@@ -92,8 +94,6 @@ public class GoTable {
         this.proteins.addAll(this.uprotMap.values());
         Collections.sort(this.proteins);
     }
-
-
 
 
     /**
@@ -118,22 +118,22 @@ public class GoTable {
 
         @Override
         public int compareTo(Protein other) {
-            return uniprotID.compareTo(other.uniprotID);
+            return geneSymbol.compareTo(other.geneSymbol);
         }
 
         @Override
         public int hashCode() {
             return new HashCodeBuilder(17, 31).
-                            append(geneSymbol).
-                            append(geneID).
-                            append(uniprotID).
-                            append(name).
-                            toHashCode();
+                    append(geneSymbol).
+                    append(geneID).
+                    append(uniprotID).
+                    append(name).
+                    toHashCode();
         }
 
         @Override
         public boolean equals(Object obj) {
-            if (! (obj instanceof Protein)) return false;
+            if (!(obj instanceof Protein)) return false;
             Protein other = (Protein) obj;
             return geneSymbol.equals(other.geneSymbol) &&
                     geneID == other.geneID &&
@@ -166,7 +166,7 @@ public class GoTable {
         header.add("Uniprot");
         header.add("name");
         for (String s : this.goTermMap.values()) {
-            String h = String.format("\\rot{%s}",s);
+            String h = String.format("\\rot{%s}", s);
             header.add(h);
         }
 
@@ -186,49 +186,49 @@ public class GoTable {
         header.add(headerField("Uniprot"));
         header.add(headerField("name"));
         for (String s : this.goTermMap.values()) {
-            String h = String.format("\\rot{%s}",s);
-            header.add(headerField(h));
+            //String h = String.format("\\rot{%s}", s);
+            header.add(headerField(s));
         }
-        return "\\hline + " + String.join(" &", header);
+        return String.join(" & ", header);
     }
 
 
     public void outputLatexLongTableToFile(String filename) {
 
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(filename))) {
-            writer.write("\\documentclass{standalone} \n");
+            writer.write("\\documentclass{article} \n");
             writer.write("\\usepackage[table]{xcolor} \n");
             writer.write("\\usepackage{longtable} \n");
             writer.write("\\usepackage{array,graphicx} \n");
             writer.write("\\usepackage{pifont} \n");
             writer.write("\\newcommand*\\rot{\\rotatebox{90}}\n");
-            writer.write("\\newcommand*\\OK{\\ding{51}}");
-            writer.write("\\begin{document}");
+            writer.write("\\newcommand*\\OK{\\ding{51}}\n\n");
+            writer.write("\\begin{document}\n");
 
-            String fields = "{lllp{8cm}|";
-            int n = this.goTermMap.size();
-            for (int i = 0; i<n; i++) {
+            String fields = "{lllp{6cm}|";
+            for (int i = 0; i < this.goTermMap.size(); i++) {
                 fields += "l";
             }
-            fields += "}";
-
+            fields += "|}";
+            int number_of_fixed_fields = 4; // gene, uniprotid, entrez id, name
+            int totalcolumns = this.goTermMap.size() + number_of_fixed_fields;
 
             writer.write("\\begin{longtable}" + fields + "\n" +
-                    "\\caption[GO Table Label.} \\label{tab:go} \\\\\n" +
+                    "\\caption{GO Table Label.} \\label{tab:go} \\\\\n" +
                     "\n" +
-                    "\\hline" +
+                    "\\hline \n " +
                     getHeaderForLongTable() +
                     " \\\\ \\hline \n" +
                     "\\endfirsthead\n" +
                     "\n" +
-                    "\\multicolumn{3}{c}%\n" +
+                    "\\multicolumn{" + totalcolumns + "}{c}%\n" +
                     "{{\\bfseries \\tablename\\ \\thetable{} -- continued from previous page}} \\\\\n" +
                     "\\hline " +
                     getHeaderForLongTable() +
                     " \\\\ \\hline \n" +
                     "\\endhead\n" +
                     "\n" +
-                    "\\hline \\multicolumn{3}{|r|}{{Continued on next page}} \\\\ \\hline\n" +
+                    "\\hline \\multicolumn{" + totalcolumns + "}{|r|}{{Continued on next page}} \\\\ \\hline\n" +
                     "\\endfoot\n" +
                     "\n" +
                     "\\hline \\hline\n" +
@@ -241,13 +241,13 @@ public class GoTable {
                 arr.add(p.name);
                 for (TermId tid : this.goTermMap.keySet()) {
                     if (p.isAnnotatedTo(tid)) {
-                        arr.add("\\cellcolor{gray!25} \\OK");
+                        arr.add("\\cellcolor{gray!25} \\OK ");
                     } else {
                         arr.add(" ");
                     }
                 }
-                String row = String.join("&", arr);
-                writer.write(row + "\\\\ \n");
+                String row = String.join(" & ", arr);
+                writer.write(row + " \\\\ \n");
             }
             writer.write("\\hline \n");
             writer.write("\\end{longtable}\n");
@@ -258,6 +258,62 @@ public class GoTable {
     }
 
 
+
+    private void parseGeneInfo(String path) {
+        this.symbolToEntrezGeneIdMap = new HashMap<>();
+        try {
+            InputStream fileStream = new FileInputStream(path);
+            InputStream gzipStream = new GZIPInputStream(fileStream);
+            Reader decoder = new InputStreamReader(gzipStream);
+            BufferedReader br = new BufferedReader(decoder);
+            String line;
+            while ((line = br.readLine()) != null) {
+                if (!line.startsWith("9606")) {
+                    // wrong subspecies
+                    continue;
+                }
+                String A[] = line.split("\t");
+                if (A.length < 10) {
+                    continue;
+                }
+                Integer id = Integer.parseInt(A[1]);
+                String sym = A[2];
+                this.symbolToEntrezGeneIdMap.put(sym, id);
+
+
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+            System.err.println("[ERROR] COuld not open gziped Gene file");
+            System.exit(1);
+        }
+        System.out.printf("[INFO] Parsed %d gene symbols.\n", this.symbolToEntrezGeneIdMap.size());
+    }
+
+    public void outputTSV(String path,Map<TermId, String> goId2Labels ) {
+        try (BufferedWriter writer = new BufferedWriter(new FileWriter(path))) {
+            // header
+            String categories = String.join("\t", goId2Labels.values());
+            writer.write("Gene\tuprot.id\tgene.id\tsplicing\tregulation\t" + categories + "\n");
+            for (Protein p : this.proteins) {
+                // output to tsv file
+                List<String> annotated = new ArrayList<>();
+                for (TermId t: goId2Labels.keySet()) {
+                    if (p.isAnnotatedTo(t)) {
+                        annotated.add("T");
+                    } else {
+                        annotated.add("F");
+                    }
+                }
+                String annots = String.join("\t",annotated);
+                writer.write(String.format("%s\t%s\t%d\t%s\n",p.geneSymbol,p.uniprotID,p.geneID,annots));
+            }
+
+
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
 
 
 }
