@@ -10,6 +10,7 @@ import org.monarchinitiative.phenol.ontology.data.TermId;
 
 import java.io.*;
 import java.util.*;
+import java.util.stream.Collectors;
 import java.util.zip.GZIPInputStream;
 
 public class GoTable {
@@ -23,11 +24,15 @@ public class GoTable {
     private Map<TermId, String> goTermMap;
 
     private Map<String, Protein> uprotMap;
-    /** Key, a symbol suh as FBN1. Value. The corresponding NCBI Entrez Gene id, e.g. 2200. */
+    /** Key, a symbol such as FBN1. Value. The corresponding NCBI Entrez Gene id, e.g. 2200. */
     private Map<String, Integer> symbolToEntrezGeneIdMap;
 
+    private Map<Integer, String> entrzGeneId2SymbolMap;
 
-    public GoTable(String goObo, String goGaf, String geneInfoPath, Map<TermId, String> goTermMap) {
+    private Map<Integer, List<Integer> >geneId2mimIdMap;
+
+
+    public GoTable(String goObo, String goGaf, String geneInfoPath, String mim2genePath, Map<TermId, String> goTermMap) {
         File goOboFile = new File(goObo);
         // GoGaf file.
         File goGafFile = new File(goGaf);
@@ -45,6 +50,7 @@ public class GoTable {
         this.goTermMap = goTermMap;
         this.uprotMap = new HashMap<>();
         parseGeneInfo(geneInfoPath);
+        parseMim2Gene(mim2genePath);
         findAnnotatedProteins(goGaf);
         makeSortedListOfProteins();
     }
@@ -258,9 +264,36 @@ public class GoTable {
     }
 
 
+    private void parseMim2Gene(String path) {
+        geneId2mimIdMap = new HashMap<>();
+        try (BufferedReader br = new BufferedReader(new FileReader(path))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                System.out.println(line);
+                String []A = line.split("\t");
+                if (! A[2].equals("phenotype")) {
+                    continue;
+                }
+                Integer mimid = Integer.parseInt(A[0]);
+                String geneIdStr = A[1];
+                if (geneIdStr.equals("-")) {
+                    continue;
+                }
+                Integer geneId = Integer.parseInt(geneIdStr);
+                geneId2mimIdMap.putIfAbsent(geneId,new ArrayList<>());
+                List<Integer> mimlist = geneId2mimIdMap.get(geneId);
+                mimlist.add(mimid);
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
+
 
     private void parseGeneInfo(String path) {
         this.symbolToEntrezGeneIdMap = new HashMap<>();
+        this.entrzGeneId2SymbolMap = new HashMap<>();
         try {
             InputStream fileStream = new FileInputStream(path);
             InputStream gzipStream = new GZIPInputStream(fileStream);
@@ -279,6 +312,7 @@ public class GoTable {
                 Integer id = Integer.parseInt(A[1]);
                 String sym = A[2];
                 this.symbolToEntrezGeneIdMap.put(sym, id);
+                this.entrzGeneId2SymbolMap.put(id, sym);
 
 
             }
@@ -305,8 +339,12 @@ public class GoTable {
                         annotated.add("F");
                     }
                 }
+                String mim = "n/a";
+                if (this.geneId2mimIdMap.containsKey(p.geneID)) {
+                    mim = this.geneId2mimIdMap.get(p.geneID).stream().map(String::valueOf).collect(Collectors.joining(";"));
+                }
                 String annots = String.join("\t",annotated);
-                writer.write(String.format("%s\t%s\t%d\t%s\n",p.geneSymbol,p.uniprotID,p.geneID,annots));
+                writer.write(String.format("%s\t%s\t%d\t%s\t%s\n",p.geneSymbol,p.uniprotID,p.geneID,annots, mim));
             }
 
 

@@ -37,6 +37,9 @@ public class Downloader {
 
     private final static String GENE_INFO_URL = "ftp://ftp.ncbi.nih.gov/gene/DATA/GENE_INFO/Mammalia/Homo_sapiens.gene_info.gz";
 
+    private final static String MIM2GENE = "mim2gene_medgen";
+
+    private final static String MIM2GENE_URL = "ftp://ftp.ncbi.nih.gov/gene/DATA/mim2gene_medgen";
 
 
     public Downloader(String path){
@@ -56,7 +59,8 @@ public class Downloader {
         downloadFileIfNeeded(GO_OBO, GO_OBO_URL);
         downloadFileIfNeeded(GO_ANNOTATION_GZIP, GO_ANNOTATION_URL);
         gunzipFileIfNeeded(GO_ANNOTATION_GZIP, GO_ANNOTATION);
-        //downloadFileIfNeeded(GENE_INFO,GENE_INFO_URL);
+        downloadFileIfNeeded(GENE_INFO,GENE_INFO_URL);
+        downloadFileIfNeeded(MIM2GENE, MIM2GENE_URL);
 
     }
 
@@ -110,10 +114,6 @@ public class Downloader {
         }
         System.out.println("[INFO] Downloaded " + filename);
     }
-
-
-
-
 
 }
 
