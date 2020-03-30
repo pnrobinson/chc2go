@@ -24,7 +24,7 @@ public class MgsaCalculationTest {
             }
         }
         Map<TermId, DirectAndIndirectTermAnnotations> assocs = associationContainer.getAssociationMap(fakeStudyGenes, ontology);
-        return new StudySet(fakeStudyGenes, "fake", assocs, ontology);
+        return new StudySet(fakeStudyGenes, "fake", assocs);
     }
 
     /*
