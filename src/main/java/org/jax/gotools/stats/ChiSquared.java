@@ -3,12 +3,10 @@ package org.jax.gotools.stats;
 import com.google.common.collect.ImmutableList;
 import org.monarchinitiative.phenol.ontology.data.TermId;
 
-import java.io.Writer;
 import java.util.*;
 
 import static org.apache.commons.math3.stat.inference.TestUtils.chiSquare;
 import static org.apache.commons.math3.stat.inference.TestUtils.chiSquareTest;
-import static org.apache.commons.math3.stat.inference.TestUtils.t;
 
 /**
  * Represents a chi-squared statistic, its p-value, and the p-value after correction for multiple comparisons.

@@ -3,7 +3,6 @@ package org.jax.gotools.mgsa;
 import org.monarchinitiative.phenol.analysis.AssociationContainer;
 import org.monarchinitiative.phenol.analysis.DirectAndIndirectTermAnnotations;
 import org.monarchinitiative.phenol.analysis.StudySet;
-
 import org.monarchinitiative.phenol.ontology.data.Ontology;
 import org.monarchinitiative.phenol.ontology.data.TermId;
 
@@ -25,7 +24,7 @@ public class MgsaCalculationTest {
             }
         }
         Map<TermId, DirectAndIndirectTermAnnotations> assocs = associationContainer.getAssociationMap(fakeStudyGenes, ontology);
-        return new StudySet(fakeStudyGenes, "fake", assocs);
+        return new StudySet(fakeStudyGenes, "fake", assocs, ontology);
     }
 
     /*

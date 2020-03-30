@@ -5,7 +5,6 @@ import com.beust.jcommander.Parameters;
 import org.jax.gotools.chc.ChcInteraction;
 import org.jax.gotools.chc.ChcInteractionParser;
 import org.jax.gotools.go.PairWiseGoSimilarity;
-import org.jax.gotools.io.Downloader;
 
 import java.util.List;
 @Parameters(commandDescription = "Run pairwise analysis of diachromatic output files")

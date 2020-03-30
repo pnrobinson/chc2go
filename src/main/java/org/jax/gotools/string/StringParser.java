@@ -1,8 +1,5 @@
 package org.jax.gotools.string;
 
-import com.google.common.collect.ImmutableSet;
-import org.jax.gotools.tf.TranscriptionFactor;
-
 import java.io.BufferedReader;
 import java.io.FileInputStream;
 import java.io.IOException;
