@@ -8,13 +8,11 @@ import org.jax.gotools.string.PPI;
 import org.jax.gotools.string.StringParser;
 import org.jax.gotools.tf.TranscriptionFactor;
 import org.jax.gotools.tf.UniprotEntry;
-import org.monarchinitiative.phenol.analysis.AssociationContainer;
 import org.monarchinitiative.phenol.base.PhenolException;
 import org.monarchinitiative.phenol.io.OntologyLoader;
-import org.monarchinitiative.phenol.io.obo.go.GoGeneAnnotationParser;
+
 import org.monarchinitiative.phenol.ontology.algo.OntologyAlgorithm;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
-import org.monarchinitiative.phenol.ontology.data.TermAnnotation;
 import org.monarchinitiative.phenol.ontology.data.TermId;
 
 import java.io.BufferedReader;
@@ -47,7 +45,7 @@ public class TranscriptionFactorCompare {
         tflstB = builder.tflstB;
         upentrylist = builder.upentrylist;
         spidToUniprotMap = new HashMap<>();
-        ImmutableMap.Builder n2ebuilder = new ImmutableMap.Builder();
+        ImmutableMap.Builder<String, Integer> n2ebuilder = new ImmutableMap.Builder<>();
         for (UniprotEntry upe : builder.upentrylist) {
             for (String sp : upe.getStringIds()) {
                 Integer ensp = ensp2int(sp);
@@ -71,7 +69,7 @@ public class TranscriptionFactorCompare {
     }
 
     private void initializeTargetList() {
-        ImmutableSet.Builder<Integer> builderA = new ImmutableSet.Builder();
+        ImmutableSet.Builder<Integer> builderA = new ImmutableSet.Builder<>();
         for (TranscriptionFactor tf : tflstA) {
             String id = tf.getName();
             if (name2enspMap.containsKey(id)) {
@@ -82,7 +80,7 @@ public class TranscriptionFactorCompare {
             }
         }
         this.targetsetA = builderA.build();
-        ImmutableSet.Builder<Integer> builderB = new ImmutableSet.Builder();
+        ImmutableSet.Builder<Integer> builderB = new ImmutableSet.Builder<>();
         for (TranscriptionFactor tf : tflstB) {
             String id = tf.getName();
             if (name2enspMap.containsKey(id)) {

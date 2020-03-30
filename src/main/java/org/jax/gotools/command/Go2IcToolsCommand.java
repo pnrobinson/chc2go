@@ -5,9 +5,8 @@ import com.beust.jcommander.Parameters;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
-import org.monarchinitiative.phenol.base.PhenolException;
+import org.monarchinitiative.phenol.annotations.obo.go.GoGeneAnnotationParser;
 import org.monarchinitiative.phenol.io.OntologyLoader;
-import org.monarchinitiative.phenol.io.obo.go.GoGeneAnnotationParser;
 import org.monarchinitiative.phenol.ontology.algo.InformationContentComputation;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
 import org.monarchinitiative.phenol.ontology.data.TermAnnotation;
@@ -44,12 +43,8 @@ public class Go2IcToolsCommand extends GoToolsCommand {
         System.out.println("[INFO] parsed " + n_terms + " GO terms.");
         String pathGoGaf = String.format("%s%s%s", dataDir, File.separator, "goa_human.gaf");
         List<TermAnnotation> goAnnots = new ArrayList<>();
-        System.out.println("[INFO] parsing  " + pathGoGaf);try {
-            final GoGeneAnnotationParser annotparser = new GoGeneAnnotationParser(pathGoGaf);
-            goAnnots = annotparser.getTermAnnotations();
-        } catch (PhenolException e) {
-            e.printStackTrace();
-        }
+        System.out.println("[INFO] parsing  " + pathGoGaf);
+        goAnnots = GoGeneAnnotationParser.loadTermAnnotations(pathGoGaf);
         System.out.println("[INFO] parsed " + goAnnots.size() + " GO annotations.");
         final Map<TermId, Collection<TermId>> termIdToGeneIds = new HashMap<>();
         for (TermAnnotation annot : goAnnots) {
