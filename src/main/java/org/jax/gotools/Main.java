@@ -21,12 +21,14 @@ public class Main {
         GoToolsCommand overrep = new Chc2GoOverrepCommand();
         GoToolsCommand tf = new TfCommand();
         GoTableCommand table = new GoTableCommand();
+        Go2IcToolsCommand go2ic = new Go2IcToolsCommand();
 
         JCommander jc = JCommander.newBuilder()
                 .addObject(main)
                 .addCommand("download", download)
                 .addCommand("chc2go", chc2go)
                 .addCommand("tf", tf)
+                .addCommand("go2ic", go2ic)
                 .addCommand("overrep", overrep)
                 .addCommand("table", table)
                 .build();
@@ -60,6 +62,9 @@ public class Main {
                 break;
             case "chc2go":
                 goToolsCommand = chc2go;
+                break;
+            case "go2ic":
+                goToolsCommand = go2ic;
                 break;
             case "table":
                 goToolsCommand = table;

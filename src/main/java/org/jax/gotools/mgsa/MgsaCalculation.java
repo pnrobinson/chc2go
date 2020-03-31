@@ -75,7 +75,7 @@ public class MgsaCalculation {
         }
         Set<TermId> allAnnotatedGenes = goAssociations.getAllAnnotatedGenes();
         Map<TermId, DirectAndIndirectTermAnnotations> assocs = goAssociations.getAssociationMap(allAnnotatedGenes, ontology);
-        this.populationSet = new PopulationSet(goAssociations.getAllAnnotatedGenes(), assocs, ontology);
+        this.populationSet = new PopulationSet(goAssociations.getAllAnnotatedGenes(), assocs);
     }
 
     /**

@@ -6,15 +6,17 @@ import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.math3.stat.inference.TestUtils;
 import org.jax.gotools.analysis.GoTermResult;
 import org.jax.gotools.chc.ChcInteraction;
+import org.monarchinitiative.phenol.annotations.formats.go.GoGaf21Annotation;
+import org.monarchinitiative.phenol.annotations.obo.go.GoGeneAnnotationParser;
 import org.monarchinitiative.phenol.base.PhenolException;
-import org.monarchinitiative.phenol.formats.go.GoGaf21Annotation;
 import org.monarchinitiative.phenol.io.OntologyLoader;
-import org.monarchinitiative.phenol.io.obo.go.GoGeneAnnotationParser;
 import org.monarchinitiative.phenol.ontology.algo.InformationContentComputation;
 import org.monarchinitiative.phenol.ontology.data.*;
 import org.monarchinitiative.phenol.analysis.*;
 import org.monarchinitiative.phenol.ontology.similarity.PairwiseResnikSimilarity;
 import org.monarchinitiative.phenol.stats.*;
+import org.monarchinitiative.phenol.stats.mtc.Bonferroni;
+import org.monarchinitiative.phenol.stats.mtc.MultipleTestingCorrection;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 
@@ -80,18 +82,12 @@ public class PairWiseGoSimilarity {
         int n_terms = geneOntology.countAllTerms();
         System.out.println("[INFO] parsed " + n_terms + " GO terms.");
         System.out.println("[INFO] parsing  " + goGafFile.getAbsolutePath());
-        try {
-            final GoGeneAnnotationParser annotparser = new GoGeneAnnotationParser(goGafFile.getAbsolutePath());
-            this.goAnnots = annotparser.getTermAnnotations();
-            System.out.println("[INFO] parsed " + goAnnots.size() + " GO annotations.");
-            associationContainer = new AssociationContainer(goAnnots);
-            int n = associationContainer.getTotalNumberOfAnnotatedTerms();
-            System.out.println("[INFO] parsed " + n + " annotated terms");
-        } catch (PhenolException e) {
-            e.printStackTrace();
-            System.out.println("[NOTE] The GAF file needs to be unzipped");
-            return;
-        }
+        this.goAnnots = GoGeneAnnotationParser.loadTermAnnotations(goGafFile);
+        System.out.println("[INFO] parsed " + goAnnots.size() + " GO annotations.");
+        associationContainer = new AssociationContainer(goAnnots);
+        int n = associationContainer.getTotalNumberOfAnnotatedTerms();
+        System.out.println("[INFO] parsed " + n + " annotated terms");
+
         try {
             prepareResnik();
         } catch (PhenolException e) {
@@ -263,7 +259,7 @@ public class PairWiseGoSimilarity {
             }
         }
         Map<TermId, DirectAndIndirectTermAnnotations> studyAssocs = this.associationContainer.getAssociationMap(studyGenes,geneOntology);
-        return new StudySet(studyGenes,"study set", studyAssocs, this.geneOntology);
+        return new StudySet(studyGenes,"study set", studyAssocs);
     }
 
 
@@ -279,10 +275,10 @@ public class PairWiseGoSimilarity {
         logger.trace("Number of GO annotations: {}.", this.goAnnots.size());
         Set<TermId> populationGenes = getPopulationSet(this.goAnnots);
         Map<TermId, DirectAndIndirectTermAnnotations> popAssocs = this.associationContainer.getAssociationMap(populationGenes, geneOntology);
-        StudySet populationSet = new PopulationSet(populationGenes, popAssocs, this.geneOntology);
+        StudySet populationSet = new PopulationSet(populationGenes, popAssocs);
         StudySet studySet = getStudySet();
         Hypergeometric hgeo = new Hypergeometric();
-        MultipleTestingCorrection<Item2PValue> bonf = new Bonferroni<>();
+        MultipleTestingCorrection bonf = new Bonferroni();
         TermForTermPValueCalculation tftpvalcal = new TermForTermPValueCalculation(this.geneOntology,
             associationContainer,
             populationSet,
