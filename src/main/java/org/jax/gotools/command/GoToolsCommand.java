@@ -9,10 +9,10 @@ public abstract class GoToolsCommand {
 
 
     @Parameter(names = {"-g", "--go"}, description = "path to go.obo file")
-    protected String goOboPath = null;
+    protected String goOboPath = "data/go.obo";
 
     @Parameter(names = {"-a", "--gaf"},  description = "path to GAF file")
-    protected String goGafPath = null;
+    protected String goGafPath = "data/goa_human.gaf";
 
     @Parameter(names = {"-d", "--data"}, description = "path to data download file")
     protected String dataDir = "data";
