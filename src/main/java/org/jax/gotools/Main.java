@@ -17,11 +17,11 @@ public class Main {
     public static void main(String[] args) {
         Main main = new Main();
         GoToolsCommand download = new DownloadCommand();
-        GoToolsCommand chc2go = new Chc2GoPairwiseCommand();
-        GoToolsCommand overrep = new Chc2GoOverrepCommand();
+        GoToolsCommand chc2go = new ParentChildCommand();
         GoToolsCommand tf = new TfCommand();
         GoTableCommand table = new GoTableCommand();
-        Go2IcToolsCommand go2ic = new Go2IcToolsCommand();
+        GoToolsCommand go2ic = new Go2IcToolsCommand();
+        GoToolsCommand parentChild = new ParentChildCommand();
 
         JCommander jc = JCommander.newBuilder()
                 .addObject(main)
@@ -29,7 +29,7 @@ public class Main {
                 .addCommand("chc2go", chc2go)
                 .addCommand("tf", tf)
                 .addCommand("go2ic", go2ic)
-                .addCommand("overrep", overrep)
+                .addCommand("pc", parentChild)
                 .addCommand("table", table)
                 .build();
 
@@ -54,8 +54,8 @@ public class Main {
             case "download":
                 goToolsCommand= download;
                 break;
-            case "overrep":
-                goToolsCommand = overrep;
+            case "pc":
+                goToolsCommand = parentChild;
                 break;
             case "tf":
                 goToolsCommand = tf;
@@ -80,13 +80,4 @@ public class Main {
 
     private Main() {
     }
-
-    /**
-     * Parse the interaction file, the two Gene Ontology files, and analyze the data.
-     */
-    private void run() {
-
-    }
-
-
 }

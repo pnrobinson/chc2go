@@ -8,20 +8,20 @@
     <name>GOtools</name>
     <packaging>jar</packaging>
 
-    <description>Capture Hi-C interactions to Gene Ontology analysis</description>
+    <description>Hi-C Gene Ontology Analysis</description>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
         <project.reporting.outputEncoding>UTF-8</project.reporting.outputEncoding>
         <java.version>8</java.version>
-        <phenol.version>1.4.4-SNAPSHOT</phenol.version>
+        <phenol.version>1.5.1-SNAPSHOT</phenol.version>
         <guava.version>27.0-jre</guava.version>
         <junit.version>5.1.0</junit.version>
     </properties>
     <licenses>
         <license>
-            <name>BSD 3-Clause</name>
-            <url>https://opensource.org/licenses/BSD-3-Clause</url>
+            <name>GNU General Public License v3.0</name>
+            <url>https://fsf.org/</url>
             <distribution>repo</distribution>
         </license>
     </licenses>
@@ -94,26 +94,6 @@
             <artifactId>phenol-analysis</artifactId>
             <version>${phenol.version}</version>
         </dependency>
-        <!-- API -->
-        <dependency>
-            <groupId>jakarta.xml.bind</groupId>
-            <artifactId>jakarta.xml.bind-api</artifactId>
-            <version>2.3.2</version>
-        </dependency>
-
-        <!-- Runtime -->
-        <dependency>
-            <groupId>org.glassfish.jaxb</groupId>
-            <artifactId>jaxb-runtime</artifactId>
-            <version>2.3.2</version>
-        </dependency>
-
-        <!-- Phenol modules -->
-        <dependency>
-            <groupId>org.monarchinitiative.phenol</groupId>
-            <artifactId>phenol-analysis</artifactId>
-            <version>${phenol.version}</version>
-        </dependency>
 
         <dependency>
             <groupId>org.monarchinitiative.phenol</groupId>
@@ -134,6 +114,21 @@
                 </exclusion>
             </exclusions>
         </dependency>
+        <!-- API -->
+        <dependency>
+            <groupId>jakarta.xml.bind</groupId>
+            <artifactId>jakarta.xml.bind-api</artifactId>
+            <version>2.3.2</version>
+        </dependency>
+
+        <!-- Runtime -->
+        <dependency>
+            <groupId>org.glassfish.jaxb</groupId>
+            <artifactId>jaxb-runtime</artifactId>
+            <version>2.3.2</version>
+        </dependency>
+
+
 
         <!-- https://mvnrepository.com/artifact/com.google.collections/google-collections -->
         <dependency>
