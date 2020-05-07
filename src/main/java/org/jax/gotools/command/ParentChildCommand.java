@@ -62,7 +62,7 @@ public class ParentChildCommand extends GoToolsCommand {
         List<TermAnnotation> goAnnots = GoGeneAnnotationParser.loadTermAnnotations(goGafPath);
         System.out.println("[INFO] parsed " + goAnnots.size() + " GO annotations.");
         AssociationContainer associationContainer = AssociationContainer.loadGoGafAssociationContainer(goGafPath);
-        int n = associationContainer.getTotalNumberOfAnnotatedTerms();
+        int n = associationContainer.getTotalNumberOfAnnotatedItems();
         System.out.println("[INFO] parsed " + n + " annotated terms");
 
         StudySet studySet = getStudySetFromFile(study, "study", associationContainer, geneOntology);

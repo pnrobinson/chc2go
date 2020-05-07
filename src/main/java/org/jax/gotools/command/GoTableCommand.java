@@ -1,6 +1,7 @@
 package org.jax.gotools.command;
 
 import com.beust.jcommander.Parameter;
+import com.beust.jcommander.Parameters;
 import org.jax.gotools.analysis.GoTable;
 import org.monarchinitiative.phenol.ontology.data.TermId;
 
@@ -8,6 +9,7 @@ import java.io.File;
 import java.util.LinkedHashMap;
 import java.util.Map;
 
+@Parameters(commandDescription = "Create a table of genes annotated to one or more GO terms")
 public class GoTableCommand extends GoToolsCommand {
 
     @Parameter(names = {"-t", "--terms"}, description = "comma-separated list of GO Ids", required = false)
