@@ -24,3 +24,6 @@ target/generated-sources/
 target/generated-test-sources/
 .idea/
 gotools_results.txt
+/splice-relevant-genes.txt
+/go2ic.txt
+/splicing-relevant.tex

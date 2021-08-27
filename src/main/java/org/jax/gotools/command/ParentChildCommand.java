@@ -1,7 +1,5 @@
 package org.jax.gotools.command;
 
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
 import org.monarchinitiative.phenol.analysis.AssociationContainer;
 import org.monarchinitiative.phenol.analysis.DirectAndIndirectTermAnnotations;
 import org.monarchinitiative.phenol.analysis.StudySet;
@@ -17,6 +15,7 @@ import org.monarchinitiative.phenol.stats.ParentChildUnionPValueCalculation;
 import org.monarchinitiative.phenol.stats.TermForTermPValueCalculation;
 import org.monarchinitiative.phenol.stats.mtc.Bonferroni;
 import org.monarchinitiative.phenol.stats.mtc.MultipleTestingCorrection;
+import picocli.CommandLine;
 
 
 import java.io.BufferedReader;
@@ -27,21 +26,28 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.concurrent.Callable;
 
-@Parameters(commandDescription = "Run pairwise analysis of diachromatic output files")
-public class ParentChildCommand extends GoToolsCommand {
+
+@CommandLine.Command(name = "parentchild", aliases = {"P"},
+        mixinStandardHelpOptions = true,
+        description = "Parent Child analysis")
+public class ParentChildCommand extends GoToolsCommand implements Callable<Integer> {
 
     private static final double THRESHOLD = 0.05;
 
-    @Parameter(names = {"-s", "--study"}, description = "path to study set", required = true)
+    @CommandLine.Option(names = {"-s", "--study"}, description = "path to study set", required = true)
     protected String studyPath;
 
-    @Parameter(names = {"-p", "--population"}, description = "path to population set", required = true)
+    @CommandLine.Option(names = {"-p", "--population"}, description = "path to population set", required = true)
     private String populationPath;
 
+    @CommandLine.Option(names = {"-d", "--data"}, description = "path to data download file")
+    protected String dataDir = "data";
+
     @Override
-    public void run() {
-        initGoPathsToDefault();
+    public Integer call() {
+        initGoPathsToDefault(this.dataDir);
         File studyFile = new File(studyPath);
         File populationFile = new File(populationPath);
         if (! studyFile.exists()) {
@@ -51,6 +57,7 @@ public class ParentChildCommand extends GoToolsCommand {
             throw new PhenolRuntimeException("Could not find population file");
         }
         runParentChild(studyFile, populationFile);
+        return 0;
     }
 
 

@@ -1,7 +1,5 @@
 package org.jax.gotools.command;
 
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
@@ -12,25 +10,32 @@ import org.monarchinitiative.phenol.ontology.data.Ontology;
 import org.monarchinitiative.phenol.ontology.data.TermAnnotation;
 import org.monarchinitiative.phenol.ontology.data.TermId;
 import org.monarchinitiative.phenol.ontology.data.TermIds;
+import picocli.CommandLine;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.Callable;
 
-@Parameters(commandDescription = "Calculate IC of GO terms in groups")
-public class Go2IcToolsCommand extends GoToolsCommand {
-    @Parameter(names={"-i", "--input"}, description = "path to input file", required = true)
+
+@CommandLine.Command(name = "IC", aliases = {"I"},
+        mixinStandardHelpOptions = true,
+        description = "Calculate IC of GO terms in groups")
+public class Go2IcToolsCommand extends GoToolsCommand implements Callable<Integer> {
+    @CommandLine.Option(names={"-i", "--input"}, description = "path to input file", required = true)
     private String inputPath;
-
+    @CommandLine.Option(names = {"-d", "--data"}, description = "path to data download file")
+    protected String dataDir = "data";
     private Map<TermId, Double> icMap;
 
     private Multimap<String, Double> category2icMap;
 
 
     @Override
-    public void run() {
+    public Integer call() {
         calculateIcMap();
         evaluateTerms();
         printResults();
+        return 0;
     }
 
 
