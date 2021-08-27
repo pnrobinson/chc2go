@@ -1,19 +1,32 @@
 package org.jax.gotools.command;
 
-import com.beust.jcommander.Parameter;
+
 import org.jax.gotools.analysis.GoTable;
 import org.monarchinitiative.phenol.ontology.data.TermId;
+import picocli.CommandLine;
 
+import java.io.File;
 import java.util.LinkedHashMap;
 import java.util.Map;
+import java.util.concurrent.Callable;
 
-public class GoTableCommand extends GoToolsCommand {
 
-    @Parameter(names = {"-t", "--terms"}, description = "comma-separated list of GO Ids", required = false)
+@CommandLine.Command(name = "table", aliases = {"T"},
+        mixinStandardHelpOptions = true,
+        description = "Create a table of genes annotated to one or more GO terms")
+public class GoTableCommand extends GoToolsCommand implements Callable<Integer> {
+
+    @CommandLine.Option(names = {"-t", "--terms"}, description = "comma-separated list of GO Ids")
     private String goIdList;
 
-    @Parameter(names={"--gene"}, description = "path to Homo_sapiens.gene_info.gz", required = true)
+    @CommandLine.Option(names={"--gene"}, description = "path to Homo_sapiens_gene_info.gz")
     private String pathToGeneInfo;
+
+    @CommandLine.Option(names={"--mim"}, description = "mim2gene_medgen")
+    private String pathToMim2gene;
+
+    @CommandLine.Option(names = {"-d", "--data"}, description = "path to data download file")
+    protected String dataDir = "data";
 
     private Map<TermId, String> goId2Label;
 
@@ -37,14 +50,23 @@ public class GoTableCommand extends GoToolsCommand {
         return goId2Label;
     }
 
-    public void run( ) {
+    @Override
+    public Integer call( ) {
         goId2Label = spliceMap();
+        initGoPathsToDefault(this.dataDir);
+        if (pathToGeneInfo == null) {
+            pathToGeneInfo = String.format("%s%s%s", this.dataDir, File.separator, "Homo_sapiens_gene_info.gz");
+        }
+        if (pathToMim2gene == null) {
+            pathToMim2gene = String.format("%s%s%s", this.dataDir, File.separator, "mim2gene_medgen");
+        }
         print_params();
-        GoTable table = new GoTable(this.goOboPath, this.goGafPath, this.pathToGeneInfo, goId2Label);
+        GoTable table = new GoTable(this.goOboPath, this.goGafPath, this.pathToGeneInfo, this.pathToMim2gene, goId2Label);
         String outf = "splicing-relevant.tex";
         table.outputLatexLongTableToFile(outf);
         String outname = "splice-relevant-genes.txt";
         table.outputTSV(outname,goId2Label);
+        return 0;
     }
 
 

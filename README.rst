@@ -15,8 +15,8 @@ github and build it using maven.
 
 .. code-block:: bash
 
-    $ git clone https://github.com/pnrobinson/chc2go.git
-    $ cd GOtools
+    $ git clone https://github.com/TheJacksonLaboratory/HC2GO.git
+    $ cd HC2GO
     $ mvn package
 
 
