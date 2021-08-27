@@ -23,8 +23,6 @@ import java.util.concurrent.Callable;
 public class Go2IcToolsCommand extends GoToolsCommand implements Callable<Integer> {
     @CommandLine.Option(names={"-i", "--input"}, description = "path to input file", required = true)
     private String inputPath;
-    @CommandLine.Option(names = {"-d", "--data"}, description = "path to data download file")
-    protected String dataDir = "data";
     private Map<TermId, Double> icMap;
 
     private Multimap<String, Double> category2icMap;
@@ -47,9 +45,8 @@ public class Go2IcToolsCommand extends GoToolsCommand implements Callable<Intege
         int n_terms = gontology.countAllTerms();
         System.out.println("[INFO] parsed " + n_terms + " GO terms.");
         String pathGoGaf = String.format("%s%s%s", dataDir, File.separator, "goa_human.gaf");
-        List<TermAnnotation> goAnnots = new ArrayList<>();
         System.out.println("[INFO] parsing  " + pathGoGaf);
-        goAnnots = GoGeneAnnotationParser.loadTermAnnotations(pathGoGaf);
+        List<TermAnnotation> goAnnots = GoGeneAnnotationParser.loadTermAnnotations(pathGoGaf);
         System.out.println("[INFO] parsed " + goAnnots.size() + " GO annotations.");
         final Map<TermId, Collection<TermId>> termIdToGeneIds = new HashMap<>();
         for (TermAnnotation annot : goAnnots) {

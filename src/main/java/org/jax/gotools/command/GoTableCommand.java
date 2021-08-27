@@ -25,8 +25,6 @@ public class GoTableCommand extends GoToolsCommand implements Callable<Integer> 
     @CommandLine.Option(names={"--mim"}, description = "mim2gene_medgen")
     private String pathToMim2gene;
 
-    @CommandLine.Option(names = {"-d", "--data"}, description = "path to data download file")
-    protected String dataDir = "data";
 
     private Map<TermId, String> goId2Label;
 

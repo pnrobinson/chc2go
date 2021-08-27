@@ -2,7 +2,6 @@ package org.jax.gotools.mgsa;
 
 import org.monarchinitiative.phenol.analysis.AssociationContainer;
 import org.monarchinitiative.phenol.analysis.DirectAndIndirectTermAnnotations;
-import org.monarchinitiative.phenol.analysis.PopulationSet;
 import org.monarchinitiative.phenol.analysis.StudySet;
 import org.monarchinitiative.phenol.base.PhenolException;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
@@ -74,8 +73,8 @@ public class MgsaCalculation {
             throw new RuntimeException(e.getMessage());
         }
         Set<TermId> allAnnotatedGenes = goAssociations.getAllAnnotatedGenes();
-        Map<TermId, DirectAndIndirectTermAnnotations> assocs = goAssociations.getAssociationMap(allAnnotatedGenes, ontology);
-        this.populationSet = new PopulationSet(goAssociations.getAllAnnotatedGenes(), assocs);
+        Map<TermId, DirectAndIndirectTermAnnotations> assocs = goAssociations.getAssociationMap(allAnnotatedGenes);
+        this.populationSet = new StudySet(goAssociations.getAllAnnotatedGenes(), "study", assocs);
     }
 
     /**
