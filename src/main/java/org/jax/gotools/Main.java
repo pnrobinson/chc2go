@@ -1,87 +1,37 @@
 package org.jax.gotools;
 
-import com.beust.jcommander.JCommander;
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.ParameterException;
 import org.jax.gotools.command.*;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import picocli.CommandLine;
 
-public class Main {
+import java.util.concurrent.Callable;
+
+
+@CommandLine.Command(name = "GOtools", mixinStandardHelpOptions = true,
+        description = "Gene Ontology tools")
+public class Main implements Callable<Integer> {
     private static final Logger logger = LoggerFactory.getLogger(Main.class);
-    @Parameter(names = {"-h", "--help"}, help = true, description = "display this help message")
-    private boolean usageHelpRequested;
 
-
-
-    public static void main(String[] args) {
-        Main main = new Main();
-        GoToolsCommand download = new DownloadCommand();
-        GoToolsCommand chc2go = new Chc2GoPairwiseCommand();
-        GoToolsCommand overrep = new Chc2GoOverrepCommand();
-        GoToolsCommand tf = new TfCommand();
-        GoTableCommand table = new GoTableCommand();
-
-        JCommander jc = JCommander.newBuilder()
-                .addObject(main)
-                .addCommand("download", download)
-                .addCommand("chc2go", chc2go)
-                .addCommand("tf", tf)
-                .addCommand("overrep", overrep)
-                .addCommand("table", table)
-                .build();
-
-        try {
-            jc.parse(args);
-        } catch (ParameterException pe) {
-            System.err.printf("[ERROR] Could not start chc2go: %s\n", pe.getMessage());
-            System.exit(1);
+    public static void main(String [] args){
+        if (args.length == 0) {
+            // if the user doesn't pass any command or option, add -h to show help
+            args = new String[]{"-h"};
         }
-        if (main.usageHelpRequested) {
-            jc.usage();
-            System.exit(0);
-        }
-        String command = jc.getParsedCommand();
-        if (command == null) {
-            System.err.println("[ERROR] no command passed");
-            System.err.println(jc.toString());
-            System.exit(1);
-        }
-        GoToolsCommand goToolsCommand = null;
-        switch (command) {
-            case "download":
-                goToolsCommand= download;
-                break;
-            case "overrep":
-                goToolsCommand = overrep;
-                break;
-            case "tf":
-                goToolsCommand = tf;
-                break;
-            case "chc2go":
-                goToolsCommand = chc2go;
-                break;
-            case "table":
-                goToolsCommand = table;
-                break;
-            default:
-                System.err.println("[ERROR] Did not recognize command: "+ command);
-                jc.usage();
-                System.exit(0);
-        }
-        goToolsCommand.run();
-
+        CommandLine cline = new CommandLine(new Main())
+                .addSubcommand("download", new DownloadCommand())
+                .addSubcommand("IC", new Go2IcToolsCommand())
+                .addSubcommand("asum", new AsumCommand())
+                .addSubcommand("tf", new TfCommand())
+                .addSubcommand("table", new GoTableCommand());
+        cline.setToggleBooleanFlags(false);
+        int exitCode = cline.execute(args);
+        System.exit(exitCode);
     }
 
-    private Main() {
+    @Override
+    public Integer call() {
+        // work done in subcommands
+        return 0;
     }
-
-    /**
-     * Parse the interaction file, the two Gene Ontology files, and analyze the data.
-     */
-    private void run() {
-
-    }
-
-
 }

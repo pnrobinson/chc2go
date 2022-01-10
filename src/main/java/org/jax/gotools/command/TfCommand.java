@@ -6,11 +6,15 @@ import org.jax.gotools.tf.TranscriptionFactor;
 import org.jax.gotools.tf.UniprotEntry;
 import org.jax.gotools.tf.UniprotTextParser;
 import org.monarchinitiative.phenol.base.PhenolException;
+import picocli.CommandLine;
 
 import java.io.File;
 import java.util.List;
-
-public class TfCommand extends GoToolsCommand {
+import java.util.concurrent.Callable;
+@CommandLine.Command(name = "tf", aliases = {"TF"},
+        mixinStandardHelpOptions = true,
+        description = "download files for GOtools")
+public class TfCommand extends GoToolsCommand implements Callable<Integer> {
 
 
 
@@ -18,7 +22,7 @@ public class TfCommand extends GoToolsCommand {
 
 
     @Override
-    public void run() {
+    public Integer call() {
         // to develop hard code path
         // Guy's output file
         String pathToTfFile = "src/test/resources/logistic_ranking.txt";
@@ -69,5 +73,6 @@ public class TfCommand extends GoToolsCommand {
         } catch (PhenolException e) {
             e.printStackTrace();
         }
+        return 0;
     }
 }

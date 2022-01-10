@@ -1,37 +1,39 @@
 package org.jax.gotools.command;
 
-import com.beust.jcommander.Parameter;
-import com.beust.jcommander.Parameters;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import org.monarchinitiative.phenol.annotations.obo.go.GoGeneAnnotationParser;
-import org.monarchinitiative.phenol.base.PhenolException;
 import org.monarchinitiative.phenol.io.OntologyLoader;
 import org.monarchinitiative.phenol.ontology.algo.InformationContentComputation;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
 import org.monarchinitiative.phenol.ontology.data.TermAnnotation;
 import org.monarchinitiative.phenol.ontology.data.TermId;
 import org.monarchinitiative.phenol.ontology.data.TermIds;
+import picocli.CommandLine;
 
 import java.io.*;
 import java.util.*;
+import java.util.concurrent.Callable;
 
-@Parameters(commandDescription = "Calculate IC of GO terms in groups")
-public class Go2IcToolsCommand extends GoToolsCommand {
-    @Parameter(names={"-i", "--input"}, description = "path to input file", required = true)
+
+@CommandLine.Command(name = "IC", aliases = {"I"},
+        mixinStandardHelpOptions = true,
+        description = "Calculate IC of GO terms in groups")
+public class Go2IcToolsCommand extends GoToolsCommand implements Callable<Integer> {
+    @CommandLine.Option(names={"-i", "--input"}, description = "path to input file", required = true)
     private String inputPath;
-
     private Map<TermId, Double> icMap;
 
     private Multimap<String, Double> category2icMap;
 
 
     @Override
-    public void run() {
+    public Integer call() {
         calculateIcMap();
         evaluateTerms();
         printResults();
+        return 0;
     }
 
 
@@ -43,9 +45,8 @@ public class Go2IcToolsCommand extends GoToolsCommand {
         int n_terms = gontology.countAllTerms();
         System.out.println("[INFO] parsed " + n_terms + " GO terms.");
         String pathGoGaf = String.format("%s%s%s", dataDir, File.separator, "goa_human.gaf");
-        List<TermAnnotation> goAnnots = new ArrayList<>();
         System.out.println("[INFO] parsing  " + pathGoGaf);
-        goAnnots = GoGeneAnnotationParser.loadTermAnnotations(pathGoGaf);
+        List<TermAnnotation> goAnnots = GoGeneAnnotationParser.loadTermAnnotations(pathGoGaf);
         System.out.println("[INFO] parsed " + goAnnots.size() + " GO annotations.");
         final Map<TermId, Collection<TermId>> termIdToGeneIds = new HashMap<>();
         for (TermAnnotation annot : goAnnots) {

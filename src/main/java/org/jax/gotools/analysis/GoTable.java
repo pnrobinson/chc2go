@@ -324,17 +324,24 @@ public class GoTable {
         System.out.printf("[INFO] Parsed %d gene symbols.\n", this.symbolToEntrezGeneIdMap.size());
     }
 
+    private static<K> void increment(Map<K, Integer> map, K key) {
+        map.putIfAbsent(key, 0);
+        map.put(key, map.get(key) + 1);
+    }
+
     public void outputTSV(String path,Map<TermId, String> goId2Labels ) {
+        Map<TermId, Integer> annotcounts = new HashMap<>();
         try (BufferedWriter writer = new BufferedWriter(new FileWriter(path))) {
             // header
             String categories = String.join("\t", goId2Labels.values());
-            writer.write("Gene\tuprot.id\tgene.id\t" + categories + "\n");
+            writer.write("Gene\tuprot.id\tgene.id\t" + categories + "\tomim\n");
             for (Protein p : this.proteins) {
                 // output to tsv file
                 List<String> annotated = new ArrayList<>();
                 for (TermId t: goId2Labels.keySet()) {
                     if (p.isAnnotatedTo(t)) {
                         annotated.add("T");
+                        increment(annotcounts, t);
                     } else {
                         annotated.add("F");
                     }
@@ -346,10 +353,12 @@ public class GoTable {
                 String annots = String.join("\t",annotated);
                 writer.write(String.format("%s\t%s\t%d\t%s\t%s\n",p.geneSymbol,p.uniprotID,p.geneID,annots, mim));
             }
-
-
         } catch (IOException e) {
             e.printStackTrace();
+        }
+        for (TermId t: annotcounts.keySet()) {
+            System.out.printf("[INFO] %s: %d annotations.\n", geneOntology.getTermMap().get(t).getName(),
+                    annotcounts.get(t));
         }
     }
 
