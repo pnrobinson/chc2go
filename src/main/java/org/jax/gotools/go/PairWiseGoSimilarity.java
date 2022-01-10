@@ -6,10 +6,10 @@ import org.apache.commons.math3.stat.descriptive.DescriptiveStatistics;
 import org.apache.commons.math3.stat.inference.TestUtils;
 import org.jax.gotools.analysis.GoTermResult;
 import org.jax.gotools.chc.ChcInteraction;
+import org.monarchinitiative.phenol.annotations.formats.go.GoGaf21Annotation;
+import org.monarchinitiative.phenol.annotations.obo.go.GoGeneAnnotationParser;
 import org.monarchinitiative.phenol.base.PhenolException;
-import org.monarchinitiative.phenol.formats.go.GoGaf21Annotation;
 import org.monarchinitiative.phenol.io.OntologyLoader;
-import org.monarchinitiative.phenol.io.obo.go.GoGeneAnnotationParser;
 import org.monarchinitiative.phenol.ontology.algo.InformationContentComputation;
 import org.monarchinitiative.phenol.ontology.data.*;
 import org.monarchinitiative.phenol.analysis.*;
@@ -81,11 +81,10 @@ public class PairWiseGoSimilarity {
         System.out.println("[INFO] parsed " + n_terms + " GO terms.");
         System.out.println("[INFO] parsing  " + goGafFile.getAbsolutePath());
         try {
-            final GoGeneAnnotationParser annotparser = new GoGeneAnnotationParser(goGafFile.getAbsolutePath());
-            this.goAnnots = annotparser.getTermAnnotations();
+            this.goAnnots = GoGeneAnnotationParser.loadTermAnnotations(goGafFile);
             System.out.println("[INFO] parsed " + goAnnots.size() + " GO annotations.");
-            associationContainer = new AssociationContainer(goAnnots);
-            int n = associationContainer.getTotalNumberOfAnnotatedTerms();
+            associationContainer = new GeneA
+            int n = associationContainer.getAssociationMap().size();
             System.out.println("[INFO] parsed " + n + " annotated terms");
         } catch (PhenolException e) {
             e.printStackTrace();
