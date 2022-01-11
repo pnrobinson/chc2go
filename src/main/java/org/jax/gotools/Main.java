@@ -22,6 +22,7 @@ public class Main implements Callable<Integer> {
                 .addSubcommand("download", new DownloadCommand())
                 .addSubcommand("IC", new Go2IcToolsCommand())
                 .addSubcommand("asum", new AsumCommand())
+                .addSubcommand("summary", new GuSummaryCommand())
                 .addSubcommand("tf", new TfCommand())
                 .addSubcommand("table", new GoTableCommand());
         cline.setToggleBooleanFlags(false);
