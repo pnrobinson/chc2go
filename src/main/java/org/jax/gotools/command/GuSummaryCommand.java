@@ -17,7 +17,7 @@ import java.util.stream.Collectors;
         description = "Create a summary of annotations for a gene")
 public class GuSummaryCommand extends GoToolsCommand implements Callable<Integer> {
 
-    @CommandLine.Option(names={"--gene"}, description = "a gene symbol")
+    @CommandLine.Option(names={"--gene"}, description = "a gene symbol" , required = true)
     private String gene;
 
 
