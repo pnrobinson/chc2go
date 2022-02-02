@@ -2,6 +2,7 @@ package org.jax.gotools.command;
 
 import org.monarchinitiative.phenol.analysis.AssociationContainer;
 import org.monarchinitiative.phenol.analysis.DirectAndIndirectTermAnnotations;
+import org.monarchinitiative.phenol.analysis.GoAssociationContainer;
 import org.monarchinitiative.phenol.analysis.StudySet;
 import org.monarchinitiative.phenol.annotations.obo.go.GoGeneAnnotationParser;
 import org.monarchinitiative.phenol.base.PhenolRuntimeException;
@@ -42,8 +43,6 @@ public class ParentChildCommand extends GoToolsCommand implements Callable<Integ
     @CommandLine.Option(names = {"-p", "--population"}, description = "path to population set", required = true)
     private String populationPath;
 
-    @CommandLine.Option(names = {"-d", "--data"}, description = "path to data download file")
-    protected String dataDir = "data";
 
     @Override
     public Integer call() {
@@ -68,7 +67,7 @@ public class ParentChildCommand extends GoToolsCommand implements Callable<Integ
         System.out.println("[INFO] parsing  " + goGafPath);
         List<TermAnnotation> goAnnots = GoGeneAnnotationParser.loadTermAnnotations(goGafPath);
         System.out.println("[INFO] parsed " + goAnnots.size() + " GO annotations.");
-        AssociationContainer associationContainer = AssociationContainer.loadGoGafAssociationContainer(goGafPath);
+        GoAssociationContainer associationContainer = GoAssociationContainer.loadGoGafAssociationContainer(goGafPath, geneOntology);
         int n = associationContainer.getTotalNumberOfAnnotatedItems();
         System.out.println("[INFO] parsed " + n + " annotated terms");
 
@@ -80,7 +79,12 @@ public class ParentChildCommand extends GoToolsCommand implements Callable<Integ
         System.out.println("########### PC Intersect ###################");
 
         ParentChildIntersectionPValueCalculation pci =
-                new ParentChildIntersectionPValueCalculation(geneOntology, associationContainer,populationSet, studySet, bonf);
+                new ParentChildIntersectionPValueCalculation(geneOntology,
+                        populationSet,
+                        studySet,
+                        bonf);
+
+
         System.out.println(GoTerm2PValAndCounts.header());
         int totalStudy = studySet.getAnnotatedItemCount();
         int totalPopulation = populationSet.getAnnotatedItemCount();
@@ -88,29 +92,29 @@ public class ParentChildCommand extends GoToolsCommand implements Callable<Integ
             if (! gt.passesThreshold(THRESHOLD)) {
                 continue;
             }
-            System.out.println(gt.getRow(geneOntology, totalStudy, totalPopulation));
+            System.out.println(gt.getRowData(geneOntology));
         }
         System.out.println("########### PC Union ###################");
         ParentChildUnionPValueCalculation pcu =
                 new ParentChildUnionPValueCalculation(geneOntology,
-                        associationContainer,populationSet,
+                        populationSet,
                         studySet, bonf);
         System.out.println(GoTerm2PValAndCounts.header());
         for (GoTerm2PValAndCounts gt : pcu.calculatePVals()) {
             if (! gt.passesThreshold(THRESHOLD)) {
                 continue;
             }
-            System.out.println(gt.getRow(geneOntology, totalStudy, totalPopulation));
+            System.out.println(gt.getRowData(geneOntology));
         }
         System.out.println("########### TermForTerm ###################");
         TermForTermPValueCalculation tft =
-                new TermForTermPValueCalculation(geneOntology, associationContainer, populationSet, studySet, bonf);
+                new TermForTermPValueCalculation(geneOntology, populationSet, studySet, bonf);
         System.out.println(GoTerm2PValAndCounts.header());
         for (GoTerm2PValAndCounts gt : tft.calculatePVals()) {
             if (! gt.passesThreshold(THRESHOLD)) {
                 continue;
             }
-            System.out.println(gt.getRow(geneOntology, totalStudy, totalPopulation));
+            System.out.println(gt.getRow(geneOntology));
         }
     }
 
@@ -128,7 +132,7 @@ public class ParentChildCommand extends GoToolsCommand implements Callable<Integ
         } catch (IOException e) {
             e.printStackTrace();
         }
-        Map<TermId, DirectAndIndirectTermAnnotations> studyAssociations = acontainer.getAssociationMap(genes, ontology);
+        Map<TermId, DirectAndIndirectTermAnnotations> studyAssociations = acontainer.getAssociationMap(genes);
         return new StudySet(genes, name, studyAssociations);
     }
 

@@ -11,7 +11,7 @@ import picocli.CommandLine;
 import java.io.File;
 import java.util.List;
 import java.util.concurrent.Callable;
-@CommandLine.Command(name = "tf", aliases = {"T"},
+@CommandLine.Command(name = "tf", aliases = {"TF"},
         mixinStandardHelpOptions = true,
         description = "download files for GOtools")
 public class TfCommand extends GoToolsCommand implements Callable<Integer> {

@@ -17,10 +17,9 @@ import java.util.concurrent.Callable;
 @CommandLine.Command(name = "download", aliases = {"D"},
         mixinStandardHelpOptions = true,
         description = "download files for GOtools")
-public class DownloadCommand implements Callable<Integer> {
+public class DownloadCommand extends GoToolsCommand implements Callable<Integer> {
     private static final Logger logger = LoggerFactory.getLogger(DownloadCommand.class);
-    @CommandLine.Option(names = {"-d", "--data"}, description = "path to data download file")
-    protected String dataDir = "data";
+
     @CommandLine.Option(names = {"-w", "--overwrite"}, description = "overwrite previously downloaded files?")
     private boolean overwrite;
 

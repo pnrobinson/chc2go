@@ -1,20 +1,31 @@
 package org.jax.gotools.command;
 
 
+import picocli.CommandLine;
+
 import java.io.File;
 
 public abstract class GoToolsCommand {
 
-
-//    @Parameter(names = {"-g", "--go"}, description = "path to go.obo file")
+    @CommandLine.Option(names = {"-g", "--go"},
+            description = "path to go.obo file",
+            scope = CommandLine.ScopeType.INHERIT)
     protected String goOboPath = "data/go.obo";
-//
-//    @Parameter(names = {"-a", "--gaf"},  description = "path to GAF file")
+
+    @CommandLine.Option(names = {"-d", "--data"},
+            description = "path to data download file",
+            scope = CommandLine.ScopeType.INHERIT)
+    protected String dataDir = "data";
+
+
+    @CommandLine.Option(names = {"-a", "--gaf"},
+        description = "path to GAF file",
+        scope = CommandLine.ScopeType.INHERIT)
     protected String goGafPath = "data/goa_human.gaf";
-//
-//
-//
-//    @Parameter(names={"--outfile"}, description = "path to output file")
+
+    @CommandLine.Option(names={"--outfile"},
+        description = "path to output file",
+        scope = CommandLine.ScopeType.INHERIT)
     protected String outfile = "gotools_results.txt";
 
 

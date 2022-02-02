@@ -27,3 +27,4 @@ gotools_results.txt
 /splice-relevant-genes.txt
 /go2ic.txt
 /splicing-relevant.tex
+/dependency-reduced-pom.xml
