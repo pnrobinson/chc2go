@@ -2,7 +2,7 @@ import os
 from collections import defaultdict
 
 outfilename = 'isopret_term_counts.tsv'
-dirpath = '/home/peter/data/isopret'
+dirpath = '/home/robinp/data/isopret'
 
 files = ['isoform_function_list_bp.txt', 'isoform_function_list_mf.txt', 'isoform_function_list_cc.txt']
 

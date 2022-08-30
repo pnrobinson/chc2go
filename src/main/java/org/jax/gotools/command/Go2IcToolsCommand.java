@@ -81,6 +81,12 @@ public class Go2IcToolsCommand extends GoToolsCommand implements Callable<Intege
         int weighted_term_count = 0;
         double term_ic = 0d;
         double wewighted_term_ic = 0d;
+        LOGGER.info("Reading input file {}", this.inputPath);
+        File file = new File(this.inputPath);
+        if (! file.isFile()) {
+            LOGGER.error("Could not find input file {}", this.inputPath);
+            return;
+        }
         try (BufferedReader br = new BufferedReader(new FileReader(this.inputPath))) {
             String line;
             int c = 0;
@@ -114,6 +120,7 @@ public class Go2IcToolsCommand extends GoToolsCommand implements Callable<Intege
                 LOGGER.error("Could not get IC for {} terms", no_ic);
             }
             System.out.printf("Mean IC %f, mean weighted ic: %f\n", mean_ic, mean_weighted_ic);
+            LOGGER.info("Mean IC {}, mean weighted ic: {}\n", mean_ic, mean_weighted_ic);
         } catch (IOException e) {
             e.printStackTrace();
         }
