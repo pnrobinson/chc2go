@@ -24,9 +24,9 @@ public class Downloader {
     /** If true, download new version whether or not the file is already present. */
     private final boolean overwrite;
 
-    private final static String GO_OBO = "go.obo";
+    private final static String GO_JSON = "go.json";
     /** URL of the hp.obo file. */
-    private final static String GO_OBO_URL ="http://purl.obolibrary.org/obo/go.obo";
+    private final static String GO_JSON_URL ="http://purl.obolibrary.org/obo/go.json";
     /** URL of the annotation file phenotype.hpoa. */
     private final static String GO_ANNOTATION_URL ="http://geneontology.org/gene-associations/goa_human.gaf.gz";
     /** Basename of the phenotype annotation file. */
@@ -56,7 +56,7 @@ public class Downloader {
      * Download the files unless they are already present.
      */
     public void download() {
-        downloadFileIfNeeded(GO_OBO, GO_OBO_URL);
+        downloadFileIfNeeded(GO_JSON, GO_JSON_URL);
         downloadFileIfNeeded(GO_ANNOTATION_GZIP, GO_ANNOTATION_URL);
         gunzipFileIfNeeded(GO_ANNOTATION_GZIP, GO_ANNOTATION);
         downloadFileIfNeeded(GENE_INFO,GENE_INFO_URL);

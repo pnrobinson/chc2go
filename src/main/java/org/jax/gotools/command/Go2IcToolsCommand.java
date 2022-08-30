@@ -41,9 +41,9 @@ public class Go2IcToolsCommand extends GoToolsCommand implements Callable<Intege
 
 
     private void calculateIcMap() {
-        String pathGoObo = String.format("%s%s%s", dataDir, File.separator, "go.obo" );
-        System.out.println("[INFO] parsing  " + pathGoObo);
-        Ontology gontology = OntologyLoader.loadOntology(new File(pathGoObo), "GO");
+        String pathGoJson = String.format("%s%s%s", dataDir, File.separator, "go.json" );
+        System.out.println("[INFO] parsing  " + pathGoJson);
+        Ontology gontology = OntologyLoader.loadOntology(new File(pathGoJson), "GO");
         int n_terms = gontology.countAllTerms();
         System.out.println("[INFO] parsed " + n_terms + " GO terms.");
         String pathGoGaf = String.format("%s%s%s", dataDir, File.separator, "goa_human.gaf");
@@ -66,8 +66,7 @@ public class Go2IcToolsCommand extends GoToolsCommand implements Callable<Intege
 
         // Compute information content of HPO terms, given the term-to-disease annotation.
         System.out.println("[INFO] Performing IC precomputation...");
-        this.icMap =
-                new InformationContentComputation(gontology)
+        this.icMap = new InformationContentComputation(gontology)
                         .computeInformationContent(termIdToGeneIds);
         System.out.println("[INFO] DONE: Performing IC precomputation");
     }

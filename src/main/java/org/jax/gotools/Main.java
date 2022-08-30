@@ -1,8 +1,7 @@
 package org.jax.gotools;
 
 import org.jax.gotools.command.*;
-import org.slf4j.Logger;
-import org.slf4j.LoggerFactory;
+
 import picocli.CommandLine;
 
 import java.util.concurrent.Callable;
@@ -11,7 +10,6 @@ import java.util.concurrent.Callable;
 @CommandLine.Command(name = "GOtools", mixinStandardHelpOptions = true,
         description = "Gene Ontology tools")
 public class Main implements Callable<Integer> {
-    private static final Logger logger = LoggerFactory.getLogger(Main.class);
 
     public static void main(String [] args){
         if (args.length == 0) {
