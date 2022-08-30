@@ -30,14 +30,13 @@ public class Go2IcToolsCommand extends GoToolsCommand implements Callable<Intege
     private String inputPath;
     private Map<TermId, Double> icMap;
 
-    private Multimap<String, Double> category2icMap;
-
+    private Map<TermId, Double> category2icMap;
+    private Map<TermId, Double> category2weightedIcMap;
 
     @Override
     public Integer call() {
         calculateIcMap();
         evaluateTerms();
-        printResults();
         return 0;
     }
 
@@ -75,8 +74,13 @@ public class Go2IcToolsCommand extends GoToolsCommand implements Callable<Intege
     }
 
     private void evaluateTerms() {
-        category2icMap = ArrayListMultimap.create();
+        category2icMap = new HashMap();
+        category2weightedIcMap = new HashMap();
         int no_ic = 0;
+        int term_count = 0;
+        int weighted_term_count = 0;
+        double term_ic = 0d;
+        double wewighted_term_ic = 0d;
         try (BufferedReader br = new BufferedReader(new FileReader(this.inputPath))) {
             String line;
             int c = 0;
@@ -87,36 +91,35 @@ public class Go2IcToolsCommand extends GoToolsCommand implements Callable<Intege
                     continue;
                 }
                 TermId goId = TermId.of(A[0]);
-                String category = A[1];
-                c++;
-                Double ic = this.icMap.getOrDefault(goId, -42.0);
-                if (ic < -1.0) {
-                    no_ic++;
-                    continue;
+                try {
+                    Integer cnt = Integer.parseInt(A[1]);
+                    Double ic = this.icMap.getOrDefault(goId, -42.0);
+                    if (ic < -1.0) {
+                        no_ic++;
+                        continue;
+                    }
+                    term_ic += ic;
+                    wewighted_term_ic += ic*cnt;
+                    term_count++;
+                    weighted_term_count += cnt;
+                } catch (NumberFormatException nfe) {
+                    LOGGER.error(nfe.getMessage());
                 }
-                category2icMap.put(category, ic);
+                c++;
             }
+            double mean_ic = term_ic/term_count;
+            double mean_weighted_ic = wewighted_term_ic/weighted_term_count;
             System.out.printf("[INFO] Parsed %d GO terms.\n", c);
             if (no_ic > 0) {
                 LOGGER.error("Could not get IC for {} terms", no_ic);
             }
+            System.out.printf("Mean IC %f, mean weighted ic: %f\n", mean_ic, mean_weighted_ic);
         } catch (IOException e) {
             e.printStackTrace();
         }
     }
 
-    private void printResults() {
-        String outfilename = "go2ic.txt";
-        try (BufferedWriter writer = new BufferedWriter(new FileWriter(outfilename))) {
-            for (Map.Entry<String, Double> entry : category2icMap.entries()) {
-                String cat = entry.getKey();
-                Double d = entry.getValue();
-                writer.write(cat + "\t" + d + "\n");
-            }
-        } catch (IOException e) {
-            e.printStackTrace();
-        }
-    }
+
 
 
 }
