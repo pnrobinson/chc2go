@@ -1,11 +1,10 @@
 package org.jax.gotools.tf;
 
 
-import com.google.common.collect.ImmutableList;
-
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.List;
 
 /**
@@ -29,9 +28,9 @@ public class TfParser {
 
 
     private void parse() {
-        ImmutableList.Builder positiveBuilder = new ImmutableList.Builder<>();
-        ImmutableList.Builder negativeBuilder = new ImmutableList.Builder<>();
-        ImmutableList.Builder nonBuilder = new ImmutableList.Builder<>();
+        List<TranscriptionFactor> positiveBuilder = new ArrayList<>();
+        List<TranscriptionFactor>  negativeBuilder = new ArrayList<>();
+        List<TranscriptionFactor>  nonBuilder = new ArrayList<>();
         try (BufferedReader br = new BufferedReader(new FileReader(this.pathToTfFile))) {
             String line = br.readLine(); // should be the header
             if (! line.startsWith("Estimate")) {
@@ -60,9 +59,9 @@ public class TfParser {
         } catch (IOException e) {
             e.printStackTrace();
         }
-        positiveSignificant = positiveBuilder.build();
-        negativeSignificant = negativeBuilder.build();
-        nonSignificant = nonBuilder.build();
+        positiveSignificant = List.copyOf(positiveBuilder);
+        negativeSignificant = List.copyOf(negativeBuilder);
+        nonSignificant = List.copyOf(nonBuilder);
     }
 
     public List<TranscriptionFactor> getPositiveSignificant() {

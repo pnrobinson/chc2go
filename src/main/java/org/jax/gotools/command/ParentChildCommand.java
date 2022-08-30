@@ -4,18 +4,19 @@ import org.monarchinitiative.phenol.analysis.AssociationContainer;
 import org.monarchinitiative.phenol.analysis.DirectAndIndirectTermAnnotations;
 import org.monarchinitiative.phenol.analysis.GoAssociationContainer;
 import org.monarchinitiative.phenol.analysis.StudySet;
-import org.monarchinitiative.phenol.annotations.obo.go.GoGeneAnnotationParser;
+import org.monarchinitiative.phenol.analysis.stats.GoTerm2PValAndCounts;
+import org.monarchinitiative.phenol.analysis.stats.ParentChildIntersectionPValueCalculation;
+import org.monarchinitiative.phenol.analysis.stats.ParentChildUnionPValueCalculation;
+import org.monarchinitiative.phenol.analysis.stats.TermForTermPValueCalculation;
+import org.monarchinitiative.phenol.analysis.stats.mtc.Bonferroni;
+import org.monarchinitiative.phenol.analysis.stats.mtc.MultipleTestingCorrection;
+import org.monarchinitiative.phenol.annotations.io.go.GoGeneAnnotationParser;
 import org.monarchinitiative.phenol.base.PhenolRuntimeException;
 import org.monarchinitiative.phenol.io.OntologyLoader;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
 import org.monarchinitiative.phenol.ontology.data.TermAnnotation;
 import org.monarchinitiative.phenol.ontology.data.TermId;
-import org.monarchinitiative.phenol.stats.GoTerm2PValAndCounts;
-import org.monarchinitiative.phenol.stats.ParentChildIntersectionPValueCalculation;
-import org.monarchinitiative.phenol.stats.ParentChildUnionPValueCalculation;
-import org.monarchinitiative.phenol.stats.TermForTermPValueCalculation;
-import org.monarchinitiative.phenol.stats.mtc.Bonferroni;
-import org.monarchinitiative.phenol.stats.mtc.MultipleTestingCorrection;
+
 import picocli.CommandLine;
 
 
@@ -23,6 +24,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileReader;
 import java.io.IOException;
+import java.nio.file.Path;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
@@ -65,9 +67,9 @@ public class ParentChildCommand extends GoToolsCommand implements Callable<Integ
         int n_terms = geneOntology.countAllTerms();
         System.out.println("[INFO] parsed " + n_terms + " GO terms.");
         System.out.println("[INFO] parsing  " + goGafPath);
-        List<TermAnnotation> goAnnots = GoGeneAnnotationParser.loadTermAnnotations(goGafPath);
+        List<TermAnnotation> goAnnots = GoGeneAnnotationParser.loadTermAnnotations(Path.of(goGafPath));
         System.out.println("[INFO] parsed " + goAnnots.size() + " GO annotations.");
-        GoAssociationContainer associationContainer = GoAssociationContainer.loadGoGafAssociationContainer(goGafPath, geneOntology);
+        GoAssociationContainer associationContainer = GoAssociationContainer.loadGoGafAssociationContainer(Path.of(goGafPath), geneOntology);
         int n = associationContainer.getTotalNumberOfAnnotatedItems();
         System.out.println("[INFO] parsed " + n + " annotated terms");
 
@@ -133,7 +135,7 @@ public class ParentChildCommand extends GoToolsCommand implements Callable<Integ
             e.printStackTrace();
         }
         Map<TermId, DirectAndIndirectTermAnnotations> studyAssociations = acontainer.getAssociationMap(genes);
-        return new StudySet(genes, name, studyAssociations);
+        return new StudySet(name, studyAssociations);
     }
 
 }

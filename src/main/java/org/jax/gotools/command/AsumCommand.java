@@ -1,7 +1,7 @@
 package org.jax.gotools.command;
 
-import org.monarchinitiative.phenol.annotations.formats.go.GoGaf21Annotation;
-import org.monarchinitiative.phenol.annotations.obo.go.GoGeneAnnotationParser;
+import org.monarchinitiative.phenol.annotations.formats.go.GoGaf22Annotation;
+import org.monarchinitiative.phenol.annotations.io.go.GoGeneAnnotationParser;
 import org.monarchinitiative.phenol.io.OntologyLoader;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
 import org.monarchinitiative.phenol.ontology.data.TermId;
@@ -34,18 +34,18 @@ public class AsumCommand extends GoToolsCommand implements Callable<Integer> {
         Ontology gontology = OntologyLoader.loadOntology(oboFile, "GO");
         int n_terms = gontology.countAllTerms();
         System.out.println("[INFO] parsed " + n_terms + " GO terms.");
-        List<GoGaf21Annotation> goAnnots = GoGeneAnnotationParser.loadAnnotations(gafFile);
+        List<GoGaf22Annotation> goAnnots = GoGeneAnnotationParser.loadAnnotations(gafFile.toPath());
         System.out.println("[INFO] parsed " + goAnnots.size() + " GO annotations.");
         final Set<TermId> seenGoIdSet = new HashSet<>();
         List<String> annotList = new ArrayList<>();
         TermId geneId = null;
-        for (GoGaf21Annotation annot : goAnnots) {
+        for (GoGaf22Annotation annot : goAnnots) {
             String dbSymbol = annot.getDbObjectSymbol();
             if (!dbSymbol.equals(this.symbol)) {
                 continue;
             }
-            geneId = annot.getLabel();
-            TermId goId = annot.getTermId();
+            geneId = annot.getItemId();
+            TermId goId = annot.getGoId();
             if (seenGoIdSet.contains(goId)) {
                 continue;
             } else {

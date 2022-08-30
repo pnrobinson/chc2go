@@ -1,13 +1,16 @@
 package org.jax.gotools.command;
 
 
-import org.monarchinitiative.phenol.annotations.formats.go.GoGaf21Annotation;
-import org.monarchinitiative.phenol.annotations.obo.go.GoGeneAnnotationParser;
+
+import org.monarchinitiative.phenol.annotations.formats.go.GoGaf22Annotation;
+import org.monarchinitiative.phenol.annotations.formats.go.GoQualifier;
+import org.monarchinitiative.phenol.annotations.io.go.GoGeneAnnotationParser;
 import org.monarchinitiative.phenol.io.OntologyLoader;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
 import picocli.CommandLine;
 
 import java.io.File;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.Callable;
 import java.util.stream.Collectors;
@@ -29,16 +32,16 @@ public class GuSummaryCommand extends GoToolsCommand implements Callable<Integer
         System.out.println("[INFO] parsed " + n_terms + " GO terms.");
         String pathGoGaf = String.format("%s%s%s", dataDir, File.separator, "goa_human.gaf");
         System.out.println("[INFO] parsing  " + pathGoGaf);
-        List<GoGaf21Annotation> goAnnots = GoGeneAnnotationParser.loadAnnotations(pathGoGaf);
-        List<GoGaf21Annotation> geneAnnots =
+        List<GoGaf22Annotation> goAnnots = GoGeneAnnotationParser.loadAnnotations(Path.of(pathGoGaf));
+        List<GoGaf22Annotation> geneAnnots =
                 goAnnots.stream().filter(
                         a -> a.getDbObjectSymbol().equals(this.gene)
                 ).collect(Collectors.toList());
         Set<MyAnnot> myAnnotSet = new HashSet<>();
         for (var a : geneAnnots) {
-            Optional<String> opt = gontology.getTermLabel(a.getTermId());
+            Optional<String> opt = gontology.getTermLabel(a.id());
             if (opt.isEmpty()) {
-                System.err.println("Could not get label for " + a.getTermId().getValue());
+                System.err.println("Could not get label for " + a.id().getValue());
                 continue;
             }
             String label = opt.get();
@@ -58,10 +61,10 @@ public class GuSummaryCommand extends GoToolsCommand implements Callable<Integer
         private final String label;
         private final String gene;
         private final String dbObjectId;
-        private final String qualifier;
+        private final GoQualifier qualifier;
 
 
-        MyAnnot(String id, String label, String gene, String dbObjectId, String qualifier) {
+        MyAnnot(String id, String label, String gene, String dbObjectId, GoQualifier qualifier) {
             this.id = id;
             this.label = label;
             this.gene = gene;
@@ -71,7 +74,7 @@ public class GuSummaryCommand extends GoToolsCommand implements Callable<Integer
 
         @Override
         public String toString() {
-            String q = qualifier.isEmpty() ? "" : "(" + qualifier + ")";
+            String q = "(" + qualifier + ")";
             return String.format("%s (%s)\t%s\t%s\t%s",
                     gene, dbObjectId, id, label, q);
         }

@@ -3,7 +3,8 @@ package org.jax.gotools.command;
 import com.google.common.collect.ArrayListMultimap;
 import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
-import org.monarchinitiative.phenol.annotations.obo.go.GoGeneAnnotationParser;
+import org.monarchinitiative.phenol.annotations.formats.go.GoGaf22Annotation;
+import org.monarchinitiative.phenol.annotations.io.go.GoGeneAnnotationParser;
 import org.monarchinitiative.phenol.io.OntologyLoader;
 import org.monarchinitiative.phenol.ontology.algo.InformationContentComputation;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
@@ -13,6 +14,7 @@ import org.monarchinitiative.phenol.ontology.data.TermIds;
 import picocli.CommandLine;
 
 import java.io.*;
+import java.nio.file.Path;
 import java.util.*;
 import java.util.concurrent.Callable;
 
@@ -46,12 +48,12 @@ public class Go2IcToolsCommand extends GoToolsCommand implements Callable<Intege
         System.out.println("[INFO] parsed " + n_terms + " GO terms.");
         String pathGoGaf = String.format("%s%s%s", dataDir, File.separator, "goa_human.gaf");
         System.out.println("[INFO] parsing  " + pathGoGaf);
-        List<TermAnnotation> goAnnots = GoGeneAnnotationParser.loadTermAnnotations(pathGoGaf);
+        List<GoGaf22Annotation> goAnnots = GoGeneAnnotationParser.loadAnnotations(Path.of(pathGoGaf));
         System.out.println("[INFO] parsed " + goAnnots.size() + " GO annotations.");
         final Map<TermId, Collection<TermId>> termIdToGeneIds = new HashMap<>();
         for (TermAnnotation annot : goAnnots) {
-            TermId geneId = annot.getLabel();
-            TermId goId = annot.getTermId();
+            TermId geneId = annot.getItemId();
+            TermId goId = annot.id();
             termIdToGeneIds.putIfAbsent(goId, new HashSet<>());
             final Set<TermId> inclAncestorTermIds = TermIds.augmentWithAncestors(gontology, Sets.newHashSet(goId), true);
             for (TermId tid : inclAncestorTermIds) {

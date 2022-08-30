@@ -1,7 +1,6 @@
 package org.jax.gotools.analysis;
 
 
-import org.apache.commons.lang.builder.HashCodeBuilder;
 import org.monarchinitiative.phenol.io.OntologyLoader;
 import org.monarchinitiative.phenol.ontology.algo.OntologyAlgorithm;
 import org.monarchinitiative.phenol.ontology.data.Ontology;
@@ -129,18 +128,13 @@ public class GoTable {
 
         @Override
         public int hashCode() {
-            return new HashCodeBuilder(17, 31).
-                    append(geneSymbol).
-                    append(geneID).
-                    append(uniprotID).
-                    append(name).
-                    toHashCode();
+            return Objects.hash(geneSymbol, geneID,uniprotID,name);
         }
 
         @Override
         public boolean equals(Object obj) {
-            if (!(obj instanceof Protein)) return false;
-            Protein other = (Protein) obj;
+            if (!(obj instanceof Protein other) ) return false;
+
             return geneSymbol.equals(other.geneSymbol) &&
                     geneID == other.geneID &&
                     uniprotID.equals(other.uniprotID) &&
