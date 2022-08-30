@@ -19,7 +19,7 @@
   #L%
   -->
 
-<Configuration status="ERROR">
+<Configuration status="INFO">
     <Properties>
         <Property name="PID">????</Property>
     </Properties>
@@ -48,7 +48,7 @@
         <logger name="info.aduna.xml.XMLReaderFactory" level="error" />
         <logger name="info.aduna.lang.service.ServiceRegistry" level="error"/>
         <logger name="org.monarchinitiative.phenol.io.obo.OboOntologyLoader" level="error" />
-        <Root level="error">
+        <Root level="INFO">
             <AppenderRef ref="Console" />
             <AppenderRef ref="File" />
         </Root>

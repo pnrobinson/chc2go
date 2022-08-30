@@ -11,6 +11,8 @@ import org.monarchinitiative.phenol.ontology.data.Ontology;
 import org.monarchinitiative.phenol.ontology.data.TermAnnotation;
 import org.monarchinitiative.phenol.ontology.data.TermId;
 import org.monarchinitiative.phenol.ontology.data.TermIds;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import picocli.CommandLine;
 
 import java.io.*;
@@ -23,6 +25,7 @@ import java.util.concurrent.Callable;
         mixinStandardHelpOptions = true,
         description = "Calculate IC of GO terms in groups")
 public class Go2IcToolsCommand extends GoToolsCommand implements Callable<Integer> {
+    Logger LOGGER = LoggerFactory.getLogger(Go2IcToolsCommand.class);
     @CommandLine.Option(names={"-i", "--input"}, description = "path to input file", required = true)
     private String inputPath;
     private Map<TermId, Double> icMap;
@@ -65,21 +68,22 @@ public class Go2IcToolsCommand extends GoToolsCommand implements Callable<Intege
 
 
         // Compute information content of HPO terms, given the term-to-disease annotation.
-        System.out.println("[INFO] Performing IC precomputation...");
+        LOGGER.info("Performing IC precomputation...");
         this.icMap = new InformationContentComputation(gontology)
                         .computeInformationContent(termIdToGeneIds);
-        System.out.println("[INFO] DONE: Performing IC precomputation");
+        LOGGER.info("DONE: Performing IC precomputation");
     }
 
     private void evaluateTerms() {
         category2icMap = ArrayListMultimap.create();
+        int no_ic = 0;
         try (BufferedReader br = new BufferedReader(new FileReader(this.inputPath))) {
             String line;
             int c = 0;
             while ((line = br.readLine()) != null) {
                 String [] A = line.split("\t");
                 if (A.length != 2) {
-                    System.err.println("[ERROR] Bad input line: " + line);
+                    LOGGER.warn(" Bad input line: " + line);
                     continue;
                 }
                 TermId goId = TermId.of(A[0]);
@@ -87,12 +91,15 @@ public class Go2IcToolsCommand extends GoToolsCommand implements Callable<Intege
                 c++;
                 Double ic = this.icMap.getOrDefault(goId, -42.0);
                 if (ic < -1.0) {
-                    System.err.println("[ERROR] Could not get IC for : " + goId.getValue());
+                    no_ic++;
                     continue;
                 }
                 category2icMap.put(category, ic);
             }
             System.out.printf("[INFO] Parsed %d GO terms.\n", c);
+            if (no_ic > 0) {
+                LOGGER.error("Could not get IC for {} terms", no_ic);
+            }
         } catch (IOException e) {
             e.printStackTrace();
         }
