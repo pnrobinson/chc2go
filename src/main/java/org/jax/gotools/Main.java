@@ -18,7 +18,7 @@ public class Main implements Callable<Integer> {
         }
         CommandLine cline = new CommandLine(new Main())
                 .addSubcommand("download", new DownloadCommand())
-                .addSubcommand("IC", new Go2IcToolsCommand())
+                .addSubcommand("IC", new GoIcCompareCommand())
                 .addSubcommand("asum", new AsumCommand())
                 .addSubcommand("summary", new GuSummaryCommand())
                 .addSubcommand("tf", new TfCommand())

@@ -1,7 +1,5 @@
 package org.jax.gotools.command;
 
-import com.google.common.collect.ArrayListMultimap;
-import com.google.common.collect.Multimap;
 import com.google.common.collect.Sets;
 import org.monarchinitiative.phenol.annotations.formats.go.GoGaf22Annotation;
 import org.monarchinitiative.phenol.annotations.io.go.GoGeneAnnotationParser;
@@ -21,11 +19,15 @@ import java.util.*;
 import java.util.concurrent.Callable;
 
 
+/**
+ * To use this command, we need to run both scripts in the scripts subdirectory of this project.
+ * The command compares the mean ICs for isopret and interpro2GO
+ */
 @CommandLine.Command(name = "IC", aliases = {"I"},
         mixinStandardHelpOptions = true,
         description = "Calculate IC of GO terms in groups")
-public class Go2IcToolsCommand extends GoToolsCommand implements Callable<Integer> {
-    Logger LOGGER = LoggerFactory.getLogger(Go2IcToolsCommand.class);
+public class GoIcCompareCommand extends GoToolsCommand implements Callable<Integer> {
+    Logger LOGGER = LoggerFactory.getLogger(GoIcCompareCommand.class);
     @CommandLine.Option(names={"-i", "--input"}, description = "path to input file", required = true)
     private String inputPath;
     private Map<TermId, Double> icMap;
